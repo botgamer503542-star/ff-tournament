@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<title>Admin</title>
+<style>
+  body { font-family: sans-serif; background: #0f172a; color: #f1f5f9; margin: 0; padding: 16px; }
+  input, button, textarea { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+  button { background: #2563eb; color: white; }
+  .danger { background: #dc2626; }
+  .card { background: #1e293b; padding: 12px; border-radius: 10px; margin: 8px 0; }
+  .hidden { display: none; }
+  .msg { color: #fbbf24; min-height: 20px; }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <h2>অ্যাডমিন লগইন</h2>
+  <input id="adminPass" type="password" placeholder="অ্যাডমিন পাসওয়ার্ড">
+  <button onclick="adminLogin()">লগইন</button>
+  <div class="msg" id="loginMsg"></div>
+</div>
+
+<div id="dashView" class="hidden">
+  <h2>ড্যাশবোর্ড</h2>
+
+  <h3>ইউজার তালিকা</h3>
+  <button onclick="loadUsers()">রিফ্রেশ</button>
+  <div id="userList"></div>
+
+  <h3>টুর্নামেন্ট যোগ করুন</h3>
+  <input id="tName" placeholder="টুর্নামেন্টের নাম">
+  <input id="tStart" type="datetime-local">
+  <input id="tFee" type="number" placeholder="এন্ট্রি ফি">
+  <input id="tPrize" placeholder="প্রাইজ">
+  <button onclick="addTournament()">যোগ করুন</button>
+
+  <h3>সেটিংস এডিট</h3>
+  <input id="sTitle" placeholder="অ্যাপের শিরোনাম (app_title)">
+  <input id="sWelcome" placeholder="স্বাগত বার্তা (welcome_text)">
+  <button onclick="saveSettings()">সেভ করুন</button>
+
+  <div class="msg" id="dashMsg"></div>
+  <button onclick="logout()" class="danger">লগআউট</button>
+</div>
+
+<script>
+const API = 'https://YOUR-RENDER-URL.onrender.com'; // Render URL বসান
+let adminToken = sessionStorage.getItem('adminToken') || '';
+
+async function api(path, options = {}) {
+  const res = await fetch(API + path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(adminToken ? { Authorization: 'Bearer ' + adminToken } : {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'সমস্যা হয়েছে');
+  return data;
+}
+
+async function adminLogin() {
+  const msg = document.getElementById('loginMsg');
+  try {
+    const data = await api('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ password: adminPass.value }),
+    });
+    adminToken = data.token;
+    sessionStorage.setItem('adminToken', adminToken);
+    showDash();
+  } catch (e) { msg.textContent = e.message; }
+}
+
+function logout() {
+  adminToken = '';
+  sessionStorage.removeItem('adminToken');
+  location.reload();
+}
+
+function showDash() {
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('dashView').classList.remove('hidden');
+  loadUsers();
+  loadSettingsIntoForm();
+}
+
+async function loadUsers() {
+  const list = document.getElementById('userList');
+  try {
+    const users = await api('/api/admin/users');
+    list.innerHTML = '';
+    users.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <b>${u.name}</b> (${u.ff_id})<br>
+        ফোন: ${u.phone}<br>
+        অবস্থা: ${u.is_banned ? 'ব্যান' : 'সক্রিয়'}<br>
+        <button class="${u.is_banned ? '' : 'danger'}"
+          onclick="${u.is_banned ? 'unban' : 'ban'}(${u.id})">
+          ${u.is_banned ? 'আনব্যান' : 'ব্যান করুন'}
+        </button>`;
+      list.appendChild(div);
+    });
+  } catch (e) { dashMsg.textContent = e.message; }
+}
+
+async function ban(id) {
+  await api(`/api/admin/ban/${id}`, { method: 'POST' });
+  loadUsers();
+}
+async function unban(id) {
+  await api(`/api/admin/unban/${id}`, { method: 'POST' });
+  loadUsers();
+}
+
+async function addTournament() {
+  try {
+    await api('/api/admin/tournaments', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: tName.value,
+        starts_at: tStart.value || null,
+        entry_fee: Number(tFee.value) || 0,
+        prize: tPrize.value,
+        status: 'open',
+      }),
+    });
+    dashMsg.textContent = 'টুর্নামেন্ট যোগ হয়েছে';
+  } catch (e) { dashMsg.textContent = e.message; }
+}
+
+async function loadSettingsIntoForm() {
+  try {
+    const s = await fetch(API + '/api/settings').then(r => r.json());
+    sTitle.value = s.app_title || '';
+    sWelcome.value = s.welcome_text || '';
+  } catch {}
+}
+
+async function saveSettings() {
+  try {
+    await api('/api/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify({
+        app_title: sTitle.value,
+        welcome_text: sWelcome.value,
+      }),
+    });
+    dashMsg.textContent = 'সেভ হয়েছে';
+  } catch (e) { dashMsg.textContent = e.message; }
+}
+
+if (adminToken) showDash();
+</script>
+</body>
+</html>
