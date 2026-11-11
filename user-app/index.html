@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.json">
+<title>FF Tournament</title>
+<style>
+  body { font-family: sans-serif; background: #111827; color: #f9fafb; margin: 0; padding: 16px; }
+  input, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+  button { background: #2563eb; color: white; }
+  .card { background: #1f2937; padding: 14px; border-radius: 10px; margin: 10px 0; }
+  .hidden { display: none; }
+  .msg { color: #fbbf24; min-height: 20px; }
+</style>
+</head>
+<body>
+
+<h2 id="title">FF Tournament</h2>
+<p id="welcome"></p>
+
+<div id="authView">
+  <div id="regForm">
+    <input id="rName" placeholder="নাম">
+    <input id="rFF" placeholder="Free Fire ID">
+    <input id="rPhone" placeholder="ফোন নম্বর">
+    <input id="rPass" type="password" placeholder="পাসওয়ার্ড">
+    <button onclick="register()">রেজিস্ট্রেশন</button>
+    <button onclick="showLogin()" style="background:#374151">লগইনে যান</button>
+  </div>
+  <div id="loginForm" class="hidden">
+    <input id="lPhone" placeholder="ফোন নম্বর">
+    <input id="lPass" type="password" placeholder="পাসওয়ার্ড">
+    <button onclick="login()">লগইন</button>
+    <button onclick="showReg()" style="background:#374151">রেজিস্ট্রেশনে যান</button>
+  </div>
+  <div class="msg" id="authMsg"></div>
+</div>
+
+<div id="mainView" class="hidden">
+  <button onclick="logout()" style="background:#374151">লগআউট</button>
+  <h3>টুর্নামেন্ট</h3>
+  <div id="tournamentList"></div>
+  <div class="msg" id="mainMsg"></div>
+</div>
+
+<script>
+const API = 'https://YOUR-RENDER-URL.onrender.com'; // Render URL বসান
+
+let token = localStorage.getItem('token') || '';
+
+async function api(path, options = {}) {
+  const res = await fetch(API + path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'সমস্যা হয়েছে');
+  return data;
+}
+
+function showLogin() {
+  document.getElementById('regForm').classList.add('hidden');
+  document.getElementById('loginForm').classList.remove('hidden');
+}
+function showReg() {
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('regForm').classList.remove('hidden');
+}
+
+async function register() {
+  const msg = document.getElementById('authMsg');
+  try {
+    await api('/api/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: rName.value, ff_id: rFF.value,
+        phone: rPhone.value, password: rPass.value,
+      }),
+    });
+    msg.textContent = 'রেজিস্ট্রেশন সফল, এখন লগইন করুন';
+    showLogin();
+  } catch (e) { msg.textContent = e.message; }
+}
+
+async function login() {
+  const msg = document.getElementById('authMsg');
+  try {
+    const data = await api('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ phone: lPhone.value, password: lPass.value }),
+    });
+    token = data.token;
+    localStorage.setItem('token', token);
+    msg.textContent = '';
+    showMain();
+  } catch (e) { msg.textContent = e.message; }
+}
+
+function logout() {
+  token = '';
+  localStorage.removeItem('token');
+  location.reload();
+}
+
+async function loadSettings() {
+  try {
+    const s = await fetch(API + '/api/settings').then(r => r.json());
+    if (s.app_title) document.getElementById('title').textContent = s.app_title;
+    if (s.welcome_text) document.getElementById('welcome').textContent = s.welcome_text;
+  } catch {}
+}
+
+async function showMain() {
+  document.getElementById('authView').classList.add('hidden');
+  document.getElementById('mainView').classList.remove('hidden');
+  loadSettings();
+  loadTournaments();
+}
+
+async function loadTournaments() {
+  const list = document.getElementById('tournamentList');
+  const msg = document.getElementById('mainMsg');
+  try {
+    const items = await api('/api/tournaments');
+    list.innerHTML = '';
+    items.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <b>${t.name}</b><br>
+        এন্ট্রি ফি: ${t.entry_fee} টাকা<br>
+        প্রাইজ: ${t.prize || '-'}<br>
+        <button onclick="join(${t.id})">জয়েন করুন</button>`;
+      list.appendChild(div);
+    });
+  } catch (e) {
+    msg.textContent = e.message;
+    if (e.message.includes('ব্যান')) logout();
+  }
+}
+
+async function join(id) {
+  const msg = document.getElementById('mainMsg');
+  try {
+    await api(`/api/tournaments/${id}/join`, { method: 'POST' });
+    msg.textContent = 'জয়েন সফল!';
+  } catch (e) { msg.textContent = e.message; }
+}
+
+if (token) showMain();
+</script>
+</body>
+</html>
