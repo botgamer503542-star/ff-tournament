@@ -255,7 +255,6 @@ app.get('/api/tournaments/:id', requireUser, wrap(async (req, res) => {
   res.json(out);
 }));
 
-// জয়েন: Free Fire আইডির নাম নেয়, ব্যালেন্স কাটে, সব এক লেনদেনে
 app.post('/api/tournaments/:id/join', requireUser, wrap(async (req, res) => {
   const tid = Number(req.params.id);
   const ffName = String(req.body.ff_name || '').trim().slice(0, 30);
@@ -398,8 +397,6 @@ app.post('/api/admin/users/:userId/balance', requireAdmin, wrap(async (req, res)
   }
 }));
 
-// ---- ডিপোজিট যাচাই ----
-
 app.get('/api/admin/deposits', requireAdmin, wrap(async (req, res) => {
   const st = ['pending', 'approved', 'rejected'].includes(req.query.status) ? req.query.status : 'pending';
   const { rows } = await pool.query(
@@ -446,8 +443,6 @@ app.post('/api/admin/deposits/:id/reject', requireAdmin, wrap(async (req, res) =
   res.json({ ok: true });
 }));
 
-// ---- উইথড্রয়াল পরিশোধ ----
-
 app.get('/api/admin/withdrawals', requireAdmin, wrap(async (req, res) => {
   const st = ['pending', 'paid', 'rejected'].includes(req.query.status) ? req.query.status : 'pending';
   const { rows } = await pool.query(
@@ -493,8 +488,6 @@ app.post('/api/admin/withdrawals/:id/reject', requireAdmin, wrap(async (req, res
     client.release();
   }
 }));
-
-// ---- ক্যাটাগরি ও টুর্নামেন্ট (অ্যাডমিন) ----
 
 app.get('/api/admin/categories', requireAdmin, wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT id, name, slug FROM categories ORDER BY sort_order, id');
@@ -570,7 +563,22 @@ app.delete('/api/admin/tournaments/:id', requireAdmin, wrap(async (req, res) => 
   res.json({ ok: true });
 }));
 
-// সেটিংস: সংখ্যাযুক্ত নামও গ্রহণ করে (যেমন banner_cs_2v2, banner_1v1)
+// টুর্নামেন্টের জয়েনার তালিকা: কে কোন নামে, কত টাকা দিয়ে জয়েন করেছে
+app.get('/api/admin/tournaments/:id/participants', requireAdmin, wrap(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT r.id, r.ff_name, r.created_at, u.name, u.ff_id, u.phone, t.entry_fee
+     FROM registrations r
+     JOIN users u ON u.id = r.user_id
+     JOIN tournaments t ON t.id = r.tournament_id
+     WHERE r.tournament_id = $1
+     ORDER BY r.created_at ASC`,
+    [Number(req.params.id)]
+  );
+  const total = rows.reduce((s, r) => s + Number(r.entry_fee || 0), 0);
+  res.json({ participants: rows, total_collected: total });
+}));
+
+// সেটিংস: সংখ্যাযুক্ত নামও গ্রহণ করে (যেমন banner_cs_2v2, support_telegram)
 app.put('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
   for (const [key, value] of Object.entries(req.body || {})) {
     if (!/^[a-z0-9_]{1,50}$/.test(key)) continue;
