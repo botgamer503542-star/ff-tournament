@@ -7,178 +7,125 @@
 <link rel="manifest" href="manifest.json">
 <title>FF Admin</title>
 <style>
-:root {
-  --bg: #0b0f1a; --panel: #111827; --card: #162036; --card2: #1d2944; --line: #263354;
-  --text: #eef2ff; --muted: #8b97b5; --accent: #6d5efc; --accent2: #22d3ee;
-  --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --gold: #fbbf24;
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Noto Sans Bengali", sans-serif; -webkit-tap-highlight-color: transparent; }
-body { min-height: 100vh; padding-bottom: 88px; }
-.hidden { display: none !important; }
+:root{--bg:#0b0f1a;--panel:#111827;--card:#162036;--card2:#1d2944;--line:#263354;--text:#eef2ff;--muted:#8b97b5;--accent:#6d5efc;--accent2:#22d3ee;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--gold:#fbbf24}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Noto Sans Bengali",sans-serif;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;padding-bottom:88px}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer;font-size:14px;font-weight:600;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--text);transition:transform .08s,opacity .2s}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:linear-gradient(135deg,#6d5efc,#22d3ee);border:none;color:#fff}
+button.ok{background:var(--green);border:none;color:#fff}
+button.danger{background:var(--red);border:none;color:#fff}
+button.sm{padding:8px 12px;font-size:13px}
+button.block{width:100%}
+input,select{width:100%;padding:13px;margin-bottom:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+.muted{color:var(--muted);font-size:13px}
+.mono{font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
+.gold{color:var(--gold)}
 
-button {
-  font-family: inherit; cursor: pointer; font-size: 14px; font-weight: 600;
-  padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line);
-  background: var(--card2); color: var(--text); transition: transform .08s, opacity .2s;
-}
-button:active { transform: scale(.97); }
-button:disabled { opacity: .5; cursor: not-allowed; }
-button.primary { background: linear-gradient(135deg, #6d5efc, #22d3ee); border: none; color: #fff; }
-button.ok { background: var(--green); border: none; color: #fff; }
-button.danger { background: var(--red); border: none; color: #fff; }
-button.sm { padding: 8px 12px; font-size: 13px; }
-button.block { width: 100%; }
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at top,#1e1b4b 0%,var(--bg) 60%)}
+.login-box{width:100%;max-width:380px;text-align:center}
+.logo{width:68px;height:68px;margin:0 auto 14px;border-radius:20px;background:linear-gradient(135deg,#6d5efc,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 12px 30px rgba(109,94,252,.35)}
+.login-box h1{margin:0 0 4px;font-size:22px}
+.login-card{margin-top:22px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
 
-input, select {
-  width: 100%; padding: 13px; margin-bottom: 12px; border-radius: 12px;
-  border: 1px solid var(--line); background: var(--card); color: var(--text);
-  font-size: 15px; font-family: inherit;
-}
-input:focus, select:focus { outline: none; border-color: var(--accent); }
-label { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
-.muted { color: var(--muted); font-size: 13px; }
-.mono { font-family: ui-monospace, Menlo, monospace; letter-spacing: .5px; }
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(11,15,26,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+.brand .mini{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6d5efc,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:16px}
+.head-actions{display:flex;gap:8px}
+.icon-btn{width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:17px}
 
-/* লগইন */
-#login {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
-  background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg) 60%);
-}
-.login-box { width: 100%; max-width: 380px; text-align: center; }
-.logo {
-  width: 68px; height: 68px; margin: 0 auto 14px; border-radius: 20px;
-  background: linear-gradient(135deg, #6d5efc, #22d3ee);
-  display: flex; align-items: center; justify-content: center; font-size: 30px;
-  box-shadow: 0 12px 30px rgba(109,94,252,.35);
-}
-.login-box h1 { margin: 0 0 4px; font-size: 22px; }
-.login-card { margin-top: 22px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+main{padding:16px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.page-head h2{margin:0 0 3px;font-size:20px}
+.page-head p{margin:0}
 
-/* হেডার */
-header {
-  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; background: rgba(11,15,26,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
-}
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
-.brand .mini { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,#6d5efc,#22d3ee); display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.head-actions { display: flex; gap: 8px; }
-.icon-btn { width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;text-align:left;color:var(--text)}
+.stat .ic{font-size:22px;margin-bottom:8px}
+.stat .num{font-size:26px;font-weight:800}
+.stat .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+.stat.alert{border-color:var(--amber);box-shadow:0 0 0 1px rgba(245,158,11,.35) inset}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+h3{margin:22px 0 10px;font-size:16px}
+.notice{margin-top:16px;padding:12px;border-radius:12px;background:#3b2a06;color:#fde68a;font-size:14px}
 
-main { padding: 16px; }
-.page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-.page-head h2 { margin: 0 0 3px; font-size: 20px; }
-.page-head p { margin: 0; }
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border-radius:999px;padding:8px 14px;font-size:13px;background:var(--card)}
+.chip.on{background:linear-gradient(135deg,#6d5efc,#22d3ee);color:#fff;border:none}
 
-/* পরিসংখ্যান */
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat {
-  background: linear-gradient(160deg, var(--card), var(--card2)); border: 1px solid var(--line);
-  border-radius: 16px; padding: 14px; cursor: pointer; text-align: left; color: var(--text);
-}
-.stat .ic { font-size: 22px; margin-bottom: 8px; }
-.stat .num { font-size: 26px; font-weight: 800; }
-.stat .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.stat.alert { border-color: var(--amber); box-shadow: 0 0 0 1px rgba(245,158,11,.35) inset; }
-.quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-h3 { margin: 22px 0 10px; font-size: 16px; }
-.notice { margin-top: 16px; padding: 12px; border-radius: 12px; background: #3b2a06; color: #fde68a; font-size: 14px; }
+.item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.item-top b{font-size:15px}
+.amount{font-size:18px;font-weight:800;color:var(--gold);white-space:nowrap}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:12px 0;font-size:13px}
+.kv span{color:var(--muted)}
+.kv b{text-align:right;word-break:break-all}
+.item-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
 
-/* ফিল্টার চিপ */
-.chips { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
-.chips::-webkit-scrollbar { display: none; }
-.chip { flex: 0 0 auto; border-radius: 999px; padding: 8px 14px; font-size: 13px; background: var(--card); }
-.chip.on { background: linear-gradient(135deg,#6d5efc,#22d3ee); color: #fff; border: none; }
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--card2);color:var(--muted)}
+.pill.pending{background:var(--amber);color:#111}
+.pill.approved,.pill.paid,.pill.open,.pill.up{background:var(--green);color:#fff}
+.pill.rejected,.pill.hidden,.pill.full{background:var(--red);color:#fff}
+.pill.closed{background:#475569;color:#fff}
+.pill.banned{background:var(--red);color:#fff}
 
-/* আইটেম কার্ড */
-.item { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
-.item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.item-top b { font-size: 15px; }
-.amount { font-size: 18px; font-weight: 800; color: var(--gold); white-space: nowrap; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 12px 0; font-size: 13px; }
-.kv span { color: var(--muted); }
-.kv b { text-align: right; word-break: break-all; }
-.item-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.avatar{width:42px;height:42px;border-radius:50%;flex:0 0 auto;background:linear-gradient(135deg,#6d5efc,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800}
+.user-row{display:flex;gap:12px;align-items:center}
+.user-row .info{flex:1;min-width:0}
+.user-row .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal{font-weight:800;color:var(--gold)}
+.search{position:relative;margin-bottom:14px}
+.search input{padding-left:42px;margin:0}
+.search::before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px}
 
-.pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--card2); color: var(--muted); }
-.pill.pending { background: var(--amber); color: #111; }
-.pill.approved, .pill.paid, .pill.open, .pill.up { background: var(--green); color: #fff; }
-.pill.rejected, .pill.hidden, .pill.full { background: var(--red); color: #fff; }
-.pill.closed { background: #475569; color: #fff; }
-.pill.banned { background: var(--red); color: #fff; }
+.t-item{padding:0;overflow:hidden}
+.t-stripe{height:6px;background:linear-gradient(90deg,#6d5efc,#22d3ee)}
+.t-body{padding:14px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.meta span{font-size:12px;background:var(--card2);border-radius:8px;padding:5px 9px;color:var(--muted)}
+.bar{height:6px;background:var(--card2);border-radius:99px;overflow:hidden;margin:10px 0 12px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#6d5efc,#22d3ee)}
 
-/* ইউজার */
-.avatar { width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; background: linear-gradient(135deg,#6d5efc,#22d3ee); display: flex; align-items: center; justify-content: center; font-weight: 800; }
-.user-row { display: flex; gap: 12px; align-items: center; }
-.user-row .info { flex: 1; min-width: 0; }
-.user-row .info b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bal { font-weight: 800; color: var(--gold); }
-.search { position: relative; margin-bottom: 14px; }
-.search input { padding-left: 42px; margin: 0; }
-.search::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; }
+.sumrow{display:flex;justify-content:space-between;align-items:center;background:var(--card2);border-radius:12px;padding:12px;margin-bottom:8px;font-weight:700}
 
-/* টুর্নামেন্ট */
-.t-item { padding: 0; overflow: hidden; }
-.t-stripe { height: 6px; background: linear-gradient(90deg,#6d5efc,#22d3ee); }
-.t-body { padding: 14px; }
-.meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.meta span { font-size: 12px; background: var(--card2); border-radius: 8px; padding: 5px 9px; color: var(--muted); }
-.bar { height: 6px; background: var(--card2); border-radius: 99px; overflow: hidden; margin: 10px 0 12px; }
-.bar i { display: block; height: 100%; background: linear-gradient(90deg,#6d5efc,#22d3ee); }
+.empty{text-align:center;padding:40px 10px;color:var(--muted)}
+.empty .big{font-size:40px;margin-bottom:8px}
+.err-box{padding:14px;border-radius:12px;background:#3f1d1d;color:#fecaca;font-size:14px}
+.loader{margin:40px auto;width:34px;height:34px;border-radius:50%;border:3px solid var(--card2);border-top-color:var(--accent2);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* খালি ও লোড */
-.empty { text-align: center; padding: 40px 10px; color: var(--muted); }
-.empty .big { font-size: 40px; margin-bottom: 8px; }
-.err-box { padding: 14px; border-radius: 12px; background: #3f1d1d; color: #fecaca; font-size: 14px; }
-.loader { margin: 40px auto; width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--card2); border-top-color: var(--accent2); animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.bottom-nav{position:fixed;left:10px;right:10px;bottom:10px;z-index:30;display:flex;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.nav-btn{flex:1;background:none;border:none;padding:8px 2px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;border-radius:14px}
+.nav-btn span{font-size:18px}
+.nav-btn.on{color:var(--text);background:rgba(109,94,252,.22)}
 
-/* নেভিগেশন */
-.bottom-nav {
-  position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 30;
-  display: flex; background: var(--panel); border: 1px solid var(--line);
-  border-radius: 20px; padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,.45);
-}
-.nav-btn {
-  flex: 1; background: none; border: none; padding: 8px 2px; color: var(--muted);
-  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; border-radius: 14px;
-}
-.nav-btn span { font-size: 18px; }
-.nav-btn.on { color: var(--text); background: rgba(109,94,252,.22); }
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .2s}
+.modal.show{opacity:1}
+.sheet{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:var(--panel);border-radius:22px 22px 0 0;border-top:1px solid var(--line);transform:translateY(30px);transition:transform .2s}
+.modal.show .sheet{transform:none}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+.sheet-head h3{margin:0;font-size:17px}
+.sheet-body{padding:16px 18px}
+.sheet-foot{display:flex;gap:8px;padding:14px 18px 22px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--panel)}
+.sheet-foot button{flex:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* মডাল ও টোস্ট */
-.modal {
-  position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.65);
-  display: flex; align-items: flex-end; justify-content: center; opacity: 0; transition: opacity .2s;
-}
-.modal.show { opacity: 1; }
-.sheet {
-  width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
-  background: var(--panel); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line);
-  transform: translateY(30px); transition: transform .2s;
-}
-.modal.show .sheet { transform: none; }
-.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
-.sheet-head h3 { margin: 0; font-size: 17px; }
-.sheet-body { padding: 16px 18px; }
-.sheet-foot { display: flex; gap: 8px; padding: 14px 18px 22px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: var(--panel); }
-.sheet-foot button { flex: 1; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.toasts { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 60; width: 92%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-.toast {
-  background: var(--card2); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 12px;
-  font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; transform: translateY(-8px); transition: .25s;
-}
-.toast.show { opacity: 1; transform: none; }
-.toast.success { border-color: var(--green); }
-.toast.error { border-color: var(--red); }
+.toasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60;width:92%;max-width:420px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--card2);border-left:4px solid var(--accent);padding:12px 14px;border-radius:12px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transform:translateY(-8px);transition:.25s}
+.toast.show{opacity:1;transform:none}
+.toast.success{border-color:var(--green)}
+.toast.error{border-color:var(--red)}
 </style>
 </head>
 <body>
 
-<!-- লগইন -->
 <div id="login" class="hidden">
   <div class="login-box">
     <div class="logo">🛡️</div>
@@ -194,7 +141,6 @@ h3 { margin: 22px 0 10px; font-size: 16px; }
   </div>
 </div>
 
-<!-- মূল অ্যাপ -->
 <div id="app" class="hidden">
   <header>
     <div class="brand"><div class="mini">🛡️</div><span>FF Admin</span></div>
@@ -215,7 +161,6 @@ h3 { margin: 22px 0 10px; font-size: 16px; }
   </nav>
 </div>
 
-<!-- মডাল -->
 <div class="modal hidden" id="modal">
   <div class="sheet">
     <div class="sheet-head"><h3 id="mTitle"></h3><button class="icon-btn sm" data-act="close">✕</button></div>
@@ -237,18 +182,15 @@ const METHOD = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket' };
 const STATUS = { pending: 'অপেক্ষমাণ', approved: 'অনুমোদিত', paid: 'পরিশোধিত', rejected: 'বাতিল' };
 const TSTATUS = { open: 'জয়েন চালু', closed: 'জয়েন বন্ধ', hidden: 'লুকানো' };
 
-// ---------- সাধারণ সহায়ক ----------
-
 function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 function fmt(s) { return s ? String(s).replace('T', ' ').replace('Z', '').slice(0, 16) : '-'; }
 function money(n) { return '৳' + (Number(n) || 0).toLocaleString('en-US'); }
 function empty(icon, text) { return `<div class="empty"><div class="big">${icon}</div>${esc(text)}</div>`; }
 function errBox(text) { return `<div class="err-box">${esc(text)}</div>`; }
 function loader() { return '<div class="loader"></div>'; }
-function isAuthErr(msg) { return /অনুমতি|মেয়াদ/.test(msg); }
+function isAuthErr(msg) { return /অনুমতি|মেয়াদ/.test(msg || ''); }
 
 function toast(msg, type = 'info') {
   const el = document.createElement('div');
@@ -287,8 +229,6 @@ async function api(path, opts = {}, tries = 2) {
   }
 }
 
-// ---------- মডাল ও নিশ্চিতকরণ ----------
-
 function openModal(title, body, foot = '') {
   $('mTitle').textContent = title;
   $('mBody').innerHTML = body;
@@ -309,8 +249,6 @@ function confirmBox(msg, onYes, yesText = 'হ্যাঁ, নিশ্চি�
      <button class="${danger ? 'danger' : 'primary'}" id="yesBtn">${esc(yesText)}</button>`);
   $('yesBtn').onclick = () => { closeModal(); onYes(); };
 }
-
-// ---------- ক্লিক হ্যান্ডলার ----------
 
 const A = {
   close: () => closeModal(),
@@ -352,6 +290,7 @@ const A = {
   't-edit': id => openTourForm(id),
   't-save': id => saveTour(id),
   't-room': id => openRoom(id),
+  't-parts': id => openParticipants(id),
   'room-save': (id, _, btn) => saveRoom(id, btn.dataset.release === '1'),
   't-del': id => confirmBox('এই টুর্নামেন্ট মুছে ফেলবেন? জয়েন করা ইউজারদের তথ্যও যাবে।', async () => {
     try { await api(`/api/admin/tournaments/${id}`, { method: 'DELETE' }); toast('মুছে ফেলা হয়েছে', 'success'); renderTours(); }
@@ -366,8 +305,6 @@ document.addEventListener('click', e => {
   const fn = A[b.dataset.act];
   if (fn) fn(b.dataset.id, null, b);
 });
-
-// ---------- নেভিগেশন ও ভিউ ----------
 
 function setView(v) {
   S.view = v;
@@ -392,8 +329,6 @@ function chip(val, label, cur, act) {
   return `<button class="chip ${val === cur ? 'on' : ''}" data-act="${act}" data-id="${val}">${label}</button>`;
 }
 
-// ---------- ড্যাশবোর্ড ----------
-
 function stat(label, value, icon, target, alert = false) {
   return `<button class="stat ${alert ? 'alert' : ''}" data-act="go" data-id="${target}">
     <div class="ic">${icon}</div><div class="num">${value}</div><div class="lbl">${esc(label)}</div></button>`;
@@ -413,7 +348,6 @@ async function renderDash() {
   if (users) S.users = users;
   if (tours) S.tours = tours;
   if (cats) S.cats = cats;
-
   const failed = [u, d, w, t].find(r => r.status === 'rejected');
   if (failed && isAuthErr(failed.reason.message)) return logout();
 
@@ -431,8 +365,6 @@ async function renderDash() {
     </div>
     ${failed ? `<div class="notice">কিছু তথ্য আনা যায়নি। ইন্টারনেট দেখে "রিফ্রেশ" চাপুন।</div>` : ''}`;
 }
-
-// ---------- ডিপোজিট ----------
 
 function depCard(d) {
   const pending = d.status === 'pending';
@@ -468,13 +400,8 @@ async function renderDeposits() {
   try {
     const list = await api('/api/admin/deposits?status=' + S.depStatus);
     $('list').innerHTML = list.length ? list.map(depCard).join('') : empty('💳', 'এই তালিকায় কোনো ডিপোজিট নেই');
-  } catch (e) {
-    $('list').innerHTML = errBox(e.message);
-    if (isAuthErr(e.message)) logout();
-  }
+  } catch (e) { $('list').innerHTML = errBox(e.message); if (isAuthErr(e.message)) logout(); }
 }
-
-// ---------- উইথড্রয়াল ----------
 
 function witCard(w) {
   const pending = w.status === 'pending';
@@ -509,13 +436,8 @@ async function renderWithdrawals() {
   try {
     const list = await api('/api/admin/withdrawals?status=' + S.witStatus);
     $('list').innerHTML = list.length ? list.map(witCard).join('') : empty('🏦', 'এই তালিকায় কোনো উইথড্রয়াল নেই');
-  } catch (e) {
-    $('list').innerHTML = errBox(e.message);
-    if (isAuthErr(e.message)) logout();
-  }
+  } catch (e) { $('list').innerHTML = errBox(e.message); if (isAuthErr(e.message)) logout(); }
 }
-
-// ---------- ইউজার ----------
 
 function userCard(u) {
   const initial = esc((u.name || '?').trim().charAt(0).toUpperCase());
@@ -552,8 +474,7 @@ function drawUsers() {
 }
 
 async function renderUsers() {
-  $('view').innerHTML = pageHead('ইউজার', 'ব্যালেন্স যোগ, কমানো ও ব্যান ব্যবস্থাপনা',
-    '<button data-act="refresh">রিফ্রেশ</button>') + `
+  $('view').innerHTML = pageHead('ইউজার', 'ব্যালেন্স যোগ, কমানো ও ব্যান ব্যবস্থাপনা', '<button data-act="refresh">রিফ্রেশ</button>') + `
     <div class="search"><input id="uSearch" placeholder="নাম, ফোন বা UID দিয়ে খুঁজুন" value="${esc(S.search)}"></div>
     <div class="muted" id="uCount" style="margin:-4px 0 10px"></div>
     <div id="uList">${loader()}</div>`;
@@ -561,10 +482,7 @@ async function renderUsers() {
   try {
     S.users = await api('/api/admin/users');
     drawUsers();
-  } catch (e) {
-    $('uList').innerHTML = errBox(e.message);
-    if (isAuthErr(e.message)) logout();
-  }
+  } catch (e) { $('uList').innerHTML = errBox(e.message); if (isAuthErr(e.message)) logout(); }
 }
 
 function openBalance(id, sign) {
@@ -574,8 +492,7 @@ function openBalance(id, sign) {
      <label>পরিমাণ (৳)</label><input id="bAmount" type="number" inputmode="numeric" placeholder="যেমন 100">
      <label>নোট</label><input id="bNote" placeholder="যেমন: bKash ম্যানুয়াল ডিপোজিট">`,
     `<button data-act="close">বাতিল</button>
-     <button class="${sign > 0 ? 'ok' : 'danger'}" data-act="bal-save" data-id="${Number(id)}" data-sign="${sign}">
-       ${sign > 0 ? 'যোগ করুন' : 'কমান'}</button>`);
+     <button class="${sign > 0 ? 'ok' : 'danger'}" data-act="bal-save" data-id="${Number(id)}" data-sign="${sign}">${sign > 0 ? 'যোগ করুন' : 'কমান'}</button>`);
 }
 
 async function saveBalance(id, sign) {
@@ -583,29 +500,21 @@ async function saveBalance(id, sign) {
   if (!n) { toast('সঠিক পরিমাণ দিন', 'error'); return; }
   const note = $('bNote').value.trim() || 'অ্যাডমিন সমন্বয়';
   try {
-    await api(`/api/admin/users/${id}/balance`, {
-      method: 'POST', body: JSON.stringify({ amount: sign * n, note }),
-    });
+    await api(`/api/admin/users/${id}/balance`, { method: 'POST', body: JSON.stringify({ amount: sign * n, note }) });
     closeModal();
     toast('ব্যালেন্স আপডেট হয়েছে', 'success');
     renderUsers();
   } catch (e) { fail(e); }
 }
 
-// ---------- টুর্নামেন্ট ----------
-
 async function renderTours() {
-  $('view').innerHTML = pageHead('টুর্নামেন্ট', 'তৈরি, এডিট ও রুম প্রকাশ করুন',
-    '<button class="primary" data-act="t-new">+ নতুন</button>') + `<div id="tList">${loader()}</div>`;
+  $('view').innerHTML = pageHead('টুর্নামেন্ট', 'তৈরি, এডিট, রুম ও জয়েনার দেখুন', '<button class="primary" data-act="t-new">+ নতুন</button>') + `<div id="tList">${loader()}</div>`;
   try {
     const [tours, cats] = await Promise.all([api('/api/admin/tournaments'), api('/api/admin/categories')]);
     S.tours = tours;
     S.cats = cats;
     drawTours();
-  } catch (e) {
-    $('tList').innerHTML = errBox(e.message);
-    if (isAuthErr(e.message)) logout();
-  }
+  } catch (e) { $('tList').innerHTML = errBox(e.message); if (isAuthErr(e.message)) logout(); }
 }
 
 function drawTours() {
@@ -634,6 +543,7 @@ function drawTours() {
           <div class="item-foot">
             <span class="pill ${t.room_released ? 'open' : 'closed'}">${t.room_released ? 'রুম প্রকাশিত' : 'রুম লুকানো'}</span>
             <div class="btns">
+              <button class="sm primary" data-act="t-parts" data-id="${Number(t.id)}">জয়েনার (${joined})</button>
               <button class="sm" data-act="t-room" data-id="${Number(t.id)}">রুম</button>
               <button class="sm" data-act="t-edit" data-id="${Number(t.id)}">এডিট</button>
               <button class="danger sm" data-act="t-del" data-id="${Number(t.id)}">মুছুন</button>
@@ -642,6 +552,29 @@ function drawTours() {
         </div>
       </div>`;
   }).join('') : empty('🏆', 'এখনো কোনো টুর্নামেন্ট নেই। "+ নতুন" চাপুন।');
+}
+
+async function openParticipants(id) {
+  const t = S.tours.find(x => Number(x.id) === Number(id));
+  openModal('জয়েনার: ' + (t ? t.name : ''), loader(), `<button data-act="close">বন্ধ করুন</button>`);
+  try {
+    const d = await api(`/api/admin/tournaments/${id}/participants`);
+    const list = d.participants || [];
+    $('mBody').innerHTML = `
+      <div class="sumrow"><span>মোট জয়েন</span><span>${list.length} জন</span></div>
+      <div class="sumrow"><span>মোট এন্ট্রি ফি জমা</span><span class="gold">${money(d.total_collected)}</span></div>
+      ${list.map((p, i) => `
+        <div class="item">
+          <div class="item-top">
+            <div>
+              <b>${i + 1}. ${esc(p.ff_name || '-')}</b>
+              <div class="muted">অ্যাকাউন্ট: ${esc(p.name)} · UID ${esc(p.ff_id)}</div>
+            </div>
+            <div class="amount">${money(p.entry_fee)}</div>
+          </div>
+          <div class="muted" style="margin-top:6px">ফোন: ${esc(p.phone)} · ${esc(fmt(p.created_at))}</div>
+        </div>`).join('') || empty('👥', 'এখনো কেউ জয়েন করেনি')}`;
+  } catch (e) { $('mBody').innerHTML = errBox(e.message); }
 }
 
 function openTourForm(id) {
@@ -669,8 +602,7 @@ function openTourForm(id) {
     <label>ছবির লিংক (ঐচ্ছিক)</label><input id="fImg" value="${v(t && t.image_url)}">
     <label>স্ট্যাটাস</label>
     <select id="fStatus">
-      ${Object.entries(TSTATUS).map(([k, lbl]) =>
-        `<option value="${k}" ${(t ? t.status : 'open') === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
+      ${Object.entries(TSTATUS).map(([k, lbl]) => `<option value="${k}" ${(t ? t.status : 'open') === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
     </select>`,
     `<button data-act="close">বাতিল</button>
      <button class="primary" data-act="t-save" data-id="${t ? Number(t.id) : ''}">${t ? 'আপডেট করুন' : 'যোগ করুন'}</button>`);
@@ -728,8 +660,6 @@ async function saveRoom(id, release) {
   } catch (e) { fail(e); }
 }
 
-// ---------- সেটিংস ----------
-
 async function openSettings() {
   openModal('সেটিংস', loader(), '');
   let s = {};
@@ -738,6 +668,9 @@ async function openSettings() {
     <h3 style="margin-top:0">অ্যাপের লেখা</h3>
     <label>অ্যাপের শিরোনাম</label><input id="sTitle" value="${esc(s.app_title || '')}">
     <label>স্বাগত বার্তা</label><input id="sWelcome" value="${esc(s.welcome_text || '')}">
+    <h3>সাপোর্ট</h3>
+    <label>টেলিগ্রাম ইউজারনেম বা লিংক</label>
+    <input id="sTg" value="${esc(s.support_telegram || '')}" placeholder="যেমন @yourname">
     <h3>পেমেন্ট নম্বর</h3>
     <p class="muted" style="margin-top:0">ইউজার ডিপোজিট এই নম্বরগুলোতে পাঠাবে</p>
     <label>bKash</label><input id="sBkash" inputmode="tel" value="${esc(s.bkash_number || '')}">
@@ -751,6 +684,7 @@ async function saveSettings() {
   const body = {
     app_title: $('sTitle').value.trim(),
     welcome_text: $('sWelcome').value.trim(),
+    support_telegram: $('sTg').value.trim(),
     bkash_number: $('sBkash').value.trim(),
     nagad_number: $('sNagad').value.trim(),
     rocket_number: $('sRocket').value.trim(),
@@ -761,8 +695,6 @@ async function saveSettings() {
     toast('সেটিংস সেভ হয়েছে', 'success');
   } catch (e) { fail(e); }
 }
-
-// ---------- লগইন ও শুরু ----------
 
 async function wake() {
   $('serverMsg').textContent = 'সার্ভার চেক হচ্ছে...';
@@ -779,9 +711,7 @@ async function wake() {
 async function adminLogin() {
   $('loginMsg').textContent = 'লগইন হচ্ছে...';
   try {
-    const d = await api('/api/admin/login', {
-      method: 'POST', body: JSON.stringify({ password: $('adminPass').value }),
-    });
+    const d = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('adminPass').value }) }, 2);
     adminToken = d.token;
     sessionStorage.setItem('adminToken', adminToken);
     $('loginMsg').textContent = '';
