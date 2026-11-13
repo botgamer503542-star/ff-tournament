@@ -2,147 +2,275 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
 <link rel="manifest" href="manifest.json">
-<title>Admin</title>
+<title>FF Admin</title>
 <style>
-  body { font-family: sans-serif; background: #0f172a; color: #f1f5f9; margin: 0; padding: 16px 16px 60px; }
-  input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 15px; box-sizing: border-box; }
-  input, select { background: #1e293b; color: #f1f5f9; }
-  button { background: #2563eb; color: white; }
-  button.small { width: auto; padding: 8px 12px; font-size: 13px; margin: 4px 4px 0 0; }
-  .danger { background: #dc2626; }
-  .ok { background: #16a34a; }
-  .grey { background: #374151; }
-  .card { background: #1e293b; padding: 12px; border-radius: 10px; margin: 8px 0; font-size: 14px; line-height: 1.6; }
-  .hidden { display: none !important; }
-  .msg { color: #fbbf24; min-height: 22px; margin: 6px 0; font-size: 14px; }
-  .tabs { display: flex; gap: 6px; overflow-x: auto; margin: 10px 0; }
-  .tabs button { width: auto; flex: 0 0 auto; padding: 10px 14px; margin: 0; background: #1e293b; }
-  .tabs button.on { background: #2563eb; }
-  h3 { margin: 22px 0 8px; border-bottom: 1px solid #334155; padding-bottom: 6px; }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #334155; }
-  .pill.pending { background: #f59e0b; color: #111; }
-  .pill.approved, .pill.paid { background: #16a34a; }
-  .pill.rejected { background: #dc2626; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+:root {
+  --bg: #0b0f1a; --panel: #111827; --card: #162036; --card2: #1d2944; --line: #263354;
+  --text: #eef2ff; --muted: #8b97b5; --accent: #6d5efc; --accent2: #22d3ee;
+  --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --gold: #fbbf24;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Noto Sans Bengali", sans-serif; -webkit-tap-highlight-color: transparent; }
+body { min-height: 100vh; padding-bottom: 88px; }
+.hidden { display: none !important; }
+
+button {
+  font-family: inherit; cursor: pointer; font-size: 14px; font-weight: 600;
+  padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card2); color: var(--text); transition: transform .08s, opacity .2s;
+}
+button:active { transform: scale(.97); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: linear-gradient(135deg, #6d5efc, #22d3ee); border: none; color: #fff; }
+button.ok { background: var(--green); border: none; color: #fff; }
+button.danger { background: var(--red); border: none; color: #fff; }
+button.sm { padding: 8px 12px; font-size: 13px; }
+button.block { width: 100%; }
+
+input, select {
+  width: 100%; padding: 13px; margin-bottom: 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); color: var(--text);
+  font-size: 15px; font-family: inherit;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+label { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+.muted { color: var(--muted); font-size: 13px; }
+.mono { font-family: ui-monospace, Menlo, monospace; letter-spacing: .5px; }
+
+/* লগইন */
+#login {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg) 60%);
+}
+.login-box { width: 100%; max-width: 380px; text-align: center; }
+.logo {
+  width: 68px; height: 68px; margin: 0 auto 14px; border-radius: 20px;
+  background: linear-gradient(135deg, #6d5efc, #22d3ee);
+  display: flex; align-items: center; justify-content: center; font-size: 30px;
+  box-shadow: 0 12px 30px rgba(109,94,252,.35);
+}
+.login-box h1 { margin: 0 0 4px; font-size: 22px; }
+.login-box .card { margin-top: 22px; text-align: left; }
+
+/* হেডার */
+header {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: rgba(11,15,26,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
+.brand .mini { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,#6d5efc,#22d3ee); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.head-actions { display: flex; gap: 8px; }
+.icon-btn { width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+
+main { padding: 16px; }
+.page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.page-head h2 { margin: 0 0 3px; font-size: 20px; }
+.page-head p { margin: 0; }
+
+/* পরিসংখ্যান */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat {
+  background: linear-gradient(160deg, var(--card), var(--card2)); border: 1px solid var(--line);
+  border-radius: 16px; padding: 14px; cursor: pointer; text-align: left; color: var(--text);
+}
+.stat .ic { font-size: 22px; margin-bottom: 8px; }
+.stat .num { font-size: 26px; font-weight: 800; }
+.stat .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.stat.alert { border-color: var(--amber); box-shadow: 0 0 0 1px rgba(245,158,11,.35) inset; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+h3 { margin: 22px 0 10px; font-size: 16px; }
+
+.notice { margin-top: 16px; padding: 12px; border-radius: 12px; background: #3b2a06; color: #fde68a; font-size: 14px; }
+
+/* ফিল্টার চিপ */
+.chips { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; border-radius: 999px; padding: 8px 14px; font-size: 13px; background: var(--card); }
+.chip.on { background: linear-gradient(135deg,#6d5efc,#22d3ee); color: #fff; border: none; }
+
+/* আইটেম কার্ড */
+.item {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px; margin-bottom: 12px; animation: rise .3s ease both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.item-top b { font-size: 15px; }
+.amount { font-size: 18px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 12px 0; font-size: 13px; }
+.kv span { color: var(--muted); }
+.kv b { text-align: right; word-break: break-all; }
+.item-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--card2); color: var(--muted); }
+.pill.pending { background: var(--amber); color: #111; }
+.pill.approved, .pill.paid, .pill.open, .pill.up { background: var(--green); color: #fff; }
+.pill.rejected, .pill.hidden, .pill.full { background: var(--red); color: #fff; }
+.pill.closed { background: #475569; color: #fff; }
+.pill.banned { background: var(--red); color: #fff; }
+
+/* ইউজার */
+.avatar {
+  width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto;
+  background: linear-gradient(135deg,#6d5efc,#22d3ee); display: flex; align-items: center; justify-content: center; font-weight: 800;
+}
+.user-row { display: flex; gap: 12px; align-items: center; }
+.user-row .info { flex: 1; min-width: 0; }
+.user-row .info b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bal { font-weight: 800; color: var(--gold); }
+.search { position: relative; margin-bottom: 14px; }
+.search input { padding-left: 42px; margin: 0; }
+.search::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; }
+
+/* টুর্নামেন্ট */
+.t-item { padding: 0; overflow: hidden; }
+.t-stripe { height: 6px; background: linear-gradient(90deg,#6d5efc,#22d3ee); }
+.t-body { padding: 14px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.meta span { font-size: 12px; background: var(--card2); border-radius: 8px; padding: 5px 9px; color: var(--muted); }
+.bar { height: 6px; background: var(--card2); border-radius: 99px; overflow: hidden; margin: 10px 0 12px; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg,#6d5efc,#22d3ee); }
+
+/* খালি ও লোড */
+.empty { text-align: center; padding: 40px 10px; color: var(--muted); }
+.empty .big { font-size: 40px; margin-bottom: 8px; }
+.err-box { padding: 14px; border-radius: 12px; background: #3f1d1d; color: #fecaca; font-size: 14px; }
+.loader { margin: 40px auto; width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--card2); border-top-color: var(--accent2); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* নেভিগেশন */
+.bottom-nav {
+  position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 30;
+  display: flex; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 20px; padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,.45);
+}
+.nav-btn {
+  flex: 1; background: none; border: none; padding: 8px 2px; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; border-radius: 14px;
+}
+.nav-btn span { font-size: 18px; }
+.nav-btn.on { color: var(--text); background: rgba(109,94,252,.22); }
+
+/* মডাল ও টোস্ট */
+.modal {
+  position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.65);
+  display: flex; align-items: flex-end; justify-content: center; opacity: 0; transition: opacity .2s;
+}
+.modal.show { opacity: 1; }
+.sheet {
+  width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;
+  background: var(--panel); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line);
+  transform: translateY(30px); transition: transform .2s;
+}
+.modal.show .sheet { transform: none; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+.sheet-head h3 { margin: 0; font-size: 17px; }
+.sheet-body { padding: 16px 18px; }
+.sheet-foot { display: flex; gap: 8px; padding: 14px 18px 22px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: var(--panel); }
+.sheet-foot button { flex: 1; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.toasts { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 60; width: 92%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  background: var(--card2); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 12px;
+  font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; transform: translateY(-8px); transition: .25s;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast.success { border-color: var(--green); }
+.toast.error { border-color: var(--red); }
 </style>
 </head>
 <body>
 
-<div id="loginView">
-  <h2>অ্যাডমিন লগইন</h2>
-  <div class="msg" id="serverMsg"></div>
-  <input id="adminPass" type="password" placeholder="অ্যাডমিন পাসওয়ার্ড">
-  <button onclick="adminLogin()">লগইন</button>
-  <div class="msg" id="loginMsg"></div>
+<!-- লগইন -->
+<div id="login" class="hidden">
+  <div class="login-box">
+    <div class="logo">🛡️</div>
+    <h1>FF Tournament Admin</h1>
+    <p class="muted">শুধু অনুমোদিত অ্যাডমিন প্রবেশ করতে পারবেন</p>
+    <div class="card" style="background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px">
+      <div class="muted" id="serverMsg" style="margin-bottom:10px;min-height:18px"></div>
+      <label>অ্যাডমিন পাসওয়ার্ড</label>
+      <input id="adminPass" type="password" placeholder="পাসওয়ার্ড লিখুন">
+      <button class="primary block" id="loginBtn">লগইন</button>
+      <div class="muted" id="loginMsg" style="margin-top:10px;min-height:18px;color:#fbbf24"></div>
+    </div>
+  </div>
 </div>
 
-<div id="dashView" class="hidden">
-  <h2>অ্যাডমিন প্যানেল</h2>
-  <div class="msg" id="dashMsg"></div>
-
-  <div class="tabs">
-    <button id="tabDep" class="on" onclick="tab('dep')">ডিপোজিট</button>
-    <button id="tabWit" onclick="tab('wit')">উইথড্রয়াল</button>
-    <button id="tabUsr" onclick="tab('usr')">ইউজার</button>
-    <button id="tabTour" onclick="tab('tour')">টুর্নামেন্ট</button>
-    <button id="tabSet" onclick="tab('set')">সেটিংস</button>
-  </div>
-
-  <!-- ডিপোজিট যাচাই -->
-  <div id="pDep">
-    <div class="tabs">
-      <button id="dsP" class="on" onclick="loadDeposits('pending')">অপেক্ষমাণ</button>
-      <button id="dsA" onclick="loadDeposits('approved')">অনুমোদিত</button>
-      <button id="dsR" onclick="loadDeposits('rejected')">বাতিল</button>
+<!-- মূল অ্যাপ -->
+<div id="app" class="hidden">
+  <header>
+    <div class="brand"><div class="mini">🛡️</div><span>FF Admin</span></div>
+    <div class="head-actions">
+      <button class="icon-btn" data-act="settings" title="সেটিংস">⚙️</button>
+      <button class="icon-btn" data-act="logout" title="লগআউট">⏻</button>
     </div>
-    <div id="depList"></div>
-  </div>
+  </header>
 
-  <!-- উইথড্রয়াল পরিশোধ -->
-  <div id="pWit" class="hidden">
-    <div class="tabs">
-      <button id="wsP" class="on" onclick="loadWithdrawals('pending')">অপেক্ষমাণ</button>
-      <button id="wsD" onclick="loadWithdrawals('paid')">পরিশোধিত</button>
-      <button id="wsR" onclick="loadWithdrawals('rejected')">বাতিল</button>
-    </div>
-    <div id="witList"></div>
-  </div>
+  <main id="view"></main>
 
-  <!-- ইউজার -->
-  <div id="pUsr" class="hidden">
-    <button class="grey" onclick="loadUsers()">রিফ্রেশ</button>
-    <div id="userList"></div>
-  </div>
-
-  <!-- টুর্নামেন্ট -->
-  <div id="pTour" class="hidden">
-    <h3 id="tFormTitle">নতুন টুর্নামেন্ট</h3>
-    <input id="tName" placeholder="টুর্নামেন্টের নাম">
-    <select id="tCat"></select>
-    <input id="tType" placeholder="ম্যাচ টাইপ (যেমন Classic Solo)">
-    <input id="tMap" placeholder="ম্যাপ (যেমন Bermuda)" value="Bermuda">
-    <div class="row2">
-      <input id="tSlots" type="number" placeholder="মোট স্লট" value="48">
-      <input id="tKill" type="number" placeholder="প্রতি কিল (৳)">
-    </div>
-    <div class="row2">
-      <input id="tFee" type="number" placeholder="এন্ট্রি ফি (৳)">
-      <input id="tPrize" placeholder="প্রাইজ পুল (যেমন ৳১০০০)">
-    </div>
-    <input id="tStart" type="datetime-local">
-    <input id="tImg" placeholder="ছবির লিংক (ঐচ্ছিক)">
-    <select id="tStatus">
-      <option value="open">open (জয়েন চালু)</option>
-      <option value="closed">closed (জয়েন বন্ধ)</option>
-      <option value="hidden">hidden (ইউজার দেখবে না)</option>
-    </select>
-    <button id="tSave" onclick="saveTournament()">যোগ করুন</button>
-    <button id="tCancel" class="grey hidden" onclick="resetTForm()">এডিট বাতিল</button>
-
-    <h3>টুর্নামেন্ট তালিকা</h3>
-    <button class="grey" onclick="loadTournaments()">রিফ্রেশ</button>
-    <div id="tourList"></div>
-  </div>
-
-  <!-- সেটিংস -->
-  <div id="pSet" class="hidden">
-    <h3>অ্যাপের লেখা</h3>
-    <input id="sTitle" placeholder="অ্যাপের শিরোনাম (app_title)">
-    <input id="sWelcome" placeholder="স্বাগত বার্তা (welcome_text)">
-    <button onclick="saveSettings(['app_title','welcome_text'])">সেভ করুন</button>
-
-    <h3>পেমেন্ট নম্বর (ইউজার ডিপোজিট করবে এখানে)</h3>
-    <input id="sBkash" inputmode="tel" placeholder="bKash নম্বর">
-    <input id="sNagad" inputmode="tel" placeholder="Nagad নম্বর">
-    <input id="sRocket" inputmode="tel" placeholder="Rocket নম্বর">
-    <button onclick="saveSettings(['bkash_number','nagad_number','rocket_number'])">পেমেন্ট নম্বর সেভ</button>
-  </div>
-
-  <button class="danger" style="margin-top:24px" onclick="logout()">লগআউট</button>
+  <nav class="bottom-nav" id="nav">
+    <button class="nav-btn" data-act="go" data-id="dash"><span>📊</span>ড্যাশবোর্ড</button>
+    <button class="nav-btn" data-act="go" data-id="deposits"><span>💳</span>ডিপোজিট</button>
+    <button class="nav-btn" data-act="go" data-id="withdrawals"><span>🏦</span>উইথড্র</button>
+    <button class="nav-btn" data-act="go" data-id="users"><span>👥</span>ইউজার</button>
+    <button class="nav-btn" data-act="go" data-id="tournaments"><span>🏆</span>টুর্নামেন্ট</button>
+  </nav>
 </div>
+
+<!-- মডাল -->
+<div class="modal hidden" id="modal">
+  <div class="sheet">
+    <div class="sheet-head"><h3 id="mTitle"></h3><button class="icon-btn sm" data-act="close">✕</button></div>
+    <div class="sheet-body" id="mBody"></div>
+    <div class="sheet-foot" id="mFoot"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
 
 <script>
 const API = 'https://production-o2k8.onrender.com';
-let adminToken = sessionStorage.getItem('adminToken') || '';
-let tourneys = [];
-let editId = null;
-let curDepStatus = 'pending';
-let curWitStatus = 'pending';
-
 const $ = id => document.getElementById(id);
+
+let adminToken = sessionStorage.getItem('adminToken') || '';
+const S = { view: 'dash', depStatus: 'pending', witStatus: 'pending', users: [], tours: [], cats: [], search: '' };
+
 const METHOD = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket' };
 const STATUS = { pending: 'অপেক্ষমাণ', approved: 'অনুমোদিত', paid: 'পরিশোধিত', rejected: 'বাতিল' };
+const TSTATUS = { open: 'জয়েন চালু', closed: 'জয়েন বন্ধ', hidden: 'লুকানো' };
+
+// ---------- সাধারণ সহায়ক ----------
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-function fmtTime(s) {
-  return s ? new Date(s).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+// ডেটাবেসের সময় যেমন আছে তেমনই দেখাই (সময় পরিবর্তন হয় না)
+function fmt(s) { return s ? String(s).replace('T', ' ').replace('Z', '').slice(0, 16) : '-'; }
+function money(n) { return '৳' + (Number(n) || 0).toLocaleString('en-US'); }
+function empty(icon, text) { return `<div class="empty"><div class="big">${icon}</div>${esc(text)}</div>`; }
+function errBox(text) { return `<div class="err-box">${esc(text)}</div>`; }
+function loader() { return '<div class="loader"></div>'; }
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  $('toasts').appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
 }
-function say(text, id = 'dashMsg') { $(id).textContent = text; }
+
+function fail(e) {
+  toast(e.message, 'error');
+  if (/অনুমতি|মেয়াদ/.test(e.message)) logout();
+}
 
 async function api(path, opts = {}, tries = 2) {
   for (let i = 1; i <= tries; i++) {
@@ -167,327 +295,36 @@ async function api(path, opts = {}, tries = 2) {
   }
 }
 
-function handleErr(e, id = 'dashMsg') {
-  say(e.message, id);
-  if (/অনুমতি|মেয়াদ/.test(e.message)) logout();
+// ---------- মডাল ও নিশ্চিতকরণ ----------
+
+function openModal(title, body, foot = '') {
+  $('mTitle').textContent = title;
+  $('mBody').innerHTML = body;
+  $('mFoot').innerHTML = foot;
+  $('modal').classList.remove('hidden');
+  requestAnimationFrame(() => $('modal').classList.add('show'));
 }
 
-async function wake() {
-  say('সার্ভার চেক হচ্ছে...', 'serverMsg');
-  try { await fetch(API + '/api/health', { cache: 'no-store' }); say('সার্ভার প্রস্তুত', 'serverMsg'); }
-  catch { say('সার্ভার জাগছে। ৬০ সেকেন্ড পর লগইন করুন।', 'serverMsg'); }
+function closeModal() {
+  $('modal').classList.remove('show');
+  setTimeout(() => $('modal').classList.add('hidden'), 200);
 }
 
-async function adminLogin() {
-  say('লগইন হচ্ছে...', 'loginMsg');
-  try {
-    const d = await api('/api/admin/login', {
-      method: 'POST', body: JSON.stringify({ password: $('adminPass').value }),
-    });
-    adminToken = d.token;
-    sessionStorage.setItem('adminToken', adminToken);
-    say('', 'loginMsg');
-    showDash();
-  } catch (e) { say(e.message, 'loginMsg'); }
+function confirmBox(msg, onYes, yesText = 'হ্যাঁ, নিশ্চিত', danger = false) {
+  openModal('নিশ্চিত করুন',
+    `<p style="line-height:1.7;margin:0">${esc(msg)}</p>`,
+    `<button data-act="close">না</button>
+     <button class="${danger ? 'danger' : 'primary'}" id="yesBtn">${esc(yesText)}</button>`);
+  $('yesBtn').onclick = () => { closeModal(); onYes(); };
 }
 
-function logout() {
-  adminToken = '';
-  sessionStorage.removeItem('adminToken');
-  location.reload();
-}
+// ---------- কাজের হ্যান্ডলার (ডেলিগেশন) ----------
 
-function showDash() {
-  $('loginView').classList.add('hidden');
-  $('dashView').classList.remove('hidden');
-  tab('dep');
-  loadSettingsForm();
-}
-
-function tab(which) {
-  const map = { dep: 'pDep', wit: 'pWit', usr: 'pUsr', tour: 'pTour', set: 'pSet' };
-  Object.entries(map).forEach(([k, id]) => $(id).classList.toggle('hidden', k !== which));
-  ['dep','wit','usr','tour','set'].forEach(k => $('tab' + k[0].toUpperCase() + k.slice(1)).classList.toggle('on', k === which));
-  if (which === 'dep') loadDeposits(curDepStatus);
-  if (which === 'wit') loadWithdrawals(curWitStatus);
-  if (which === 'usr') loadUsers();
-  if (which === 'tour') { loadCategories(); loadTournaments(); }
-}
-
-// ---------- ডিপোজিট ----------
-
-async function loadDeposits(status) {
-  curDepStatus = status;
-  ['P','A','R'].forEach((k, i) => $('ds' + k).classList.toggle('on', ['pending','approved','rejected'][i] === status));
-  $('depList').innerHTML = '<p>লোড হচ্ছে...</p>';
-  try {
-    const list = await api('/api/admin/deposits?status=' + status);
-    $('depList').innerHTML = list.map(d => `
-      <div class="card">
-        <b>${esc(d.name)}</b> (UID: ${esc(d.ff_id)})<br>
-        ফোন: ${esc(d.phone)}<br>
-        ${esc(METHOD[d.method] || d.method)} · <b>৳${Number(d.amount)}</b><br>
-        পাঠানো নম্বর: ${esc(d.sender_number)}<br>
-        TrxID: <b>${esc(d.trx_id)}</b><br>
-        সময়: ${esc(fmtTime(d.created_at))}<br>
-        <span class="pill ${esc(d.status)}">${esc(STATUS[d.status])}</span><br>
-        ${status === 'pending' ? `
-          <button class="small ok" onclick="approveDeposit(${Number(d.id)})">অনুমোদন (ব্যালেন্সে যোগ)</button>
-          <button class="small danger" onclick="rejectDeposit(${Number(d.id)})">বাতিল</button>` : ''}
-      </div>`).join('') || '<p>এই তালিকায় কিছু নেই</p>';
-  } catch (e) { handleErr(e); }
-}
-
-async function approveDeposit(id) {
-  if (!confirm('আপনি কি নিজের bKash/Nagad/Rocket-এ এই টাকা পেয়েছেন? অনুমোদন করলে ব্যালেন্স বাড়বে।')) return;
-  try {
-    await api(`/api/admin/deposits/${id}/approve`, { method: 'POST' });
-    say('অনুমোদন হয়েছে, ব্যালেন্স যোগ হয়েছে');
-    loadDeposits('pending');
-  } catch (e) { handleErr(e); }
-}
-
-async function rejectDeposit(id) {
-  if (!confirm('এই ডিপোজিট অনুরোধ বাতিল করবেন?')) return;
-  try {
-    await api(`/api/admin/deposits/${id}/reject`, { method: 'POST' });
-    say('বাতিল করা হয়েছে');
-    loadDeposits('pending');
-  } catch (e) { handleErr(e); }
-}
-
-// ---------- উইথড্রয়াল ----------
-
-async function loadWithdrawals(status) {
-  curWitStatus = status;
-  ['P','D','R'].forEach((k, i) => $('ws' + k).classList.toggle('on', ['pending','paid','rejected'][i] === status));
-  $('witList').innerHTML = '<p>লোড হচ্ছে...</p>';
-  try {
-    const list = await api('/api/admin/withdrawals?status=' + status);
-    $('witList').innerHTML = list.map(w => `
-      <div class="card">
-        <b>${esc(w.name)}</b> (UID: ${esc(w.ff_id)})<br>
-        ফোন: ${esc(w.phone)}<br>
-        ${esc(METHOD[w.method] || w.method)} · <b>৳${Number(w.amount)}</b><br>
-        টাকা পাঠাতে হবে এই নম্বরে: <b>${esc(w.account_number)}</b><br>
-        সময়: ${esc(fmtTime(w.created_at))}<br>
-        <span class="pill ${esc(w.status)}">${esc(STATUS[w.status])}</span><br>
-        ${status === 'pending' ? `
-          <button class="small ok" onclick="paidWithdraw(${Number(w.id)})">পাঠানো হয়েছে</button>
-          <button class="small danger" onclick="rejectWithdraw(${Number(w.id)})">বাতিল (টাকা ফেরত)</button>` : ''}
-      </div>`).join('') || '<p>এই তালিকায় কিছু নেই</p>';
-  } catch (e) { handleErr(e); }
-}
-
-async function paidWithdraw(id) {
-  if (!confirm('আপনি কি এই নম্বরে টাকা পাঠিয়ে দিয়েছেন?')) return;
-  try {
-    await api(`/api/admin/withdrawals/${id}/paid`, { method: 'POST' });
-    say('পরিশোধিত হিসেবে চিহ্নিত');
-    loadWithdrawals('pending');
-  } catch (e) { handleErr(e); }
-}
-
-async function rejectWithdraw(id) {
-  if (!confirm('বাতিল করলে টাকা ইউজারের ব্যালেন্সে ফেরত যাবে। নিশ্চিত?')) return;
-  try {
-    await api(`/api/admin/withdrawals/${id}/reject`, { method: 'POST' });
-    say('বাতিল হয়েছে, টাকা ফেরত দেওয়া হয়েছে');
-    loadWithdrawals('pending');
-  } catch (e) { handleErr(e); }
-}
-
-// ---------- ইউজার ----------
-
-async function loadUsers() {
-  $('userList').innerHTML = '<p>লোড হচ্ছে...</p>';
-  try {
-    const users = await api('/api/admin/users');
-    $('userList').innerHTML = users.map(u => `
-      <div class="card">
-        <b>${esc(u.name)}</b> (UID: ${esc(u.ff_id)})<br>
-        ফোন: ${esc(u.phone)} · ব্যালেন্স: <b>৳${Number(u.balance)}</b><br>
-        অবস্থা: ${u.is_banned ? '<span style="color:#f87171">ব্যান</span>' : 'সক্রিয়'}<br>
-        <button class="small ok" onclick="adjustBalance(${Number(u.id)}, 1)">+ ব্যালেন্স যোগ</button>
-        <button class="small grey" onclick="adjustBalance(${Number(u.id)}, -1)">- ব্যালেন্স কমান</button>
-        <button class="small ${u.is_banned ? 'ok' : 'danger'}"
-          onclick="${u.is_banned ? 'unban' : 'ban'}(${Number(u.id)})">${u.is_banned ? 'আনব্যান' : 'ব্যান'}</button>
-      </div>`).join('') || '<p>কোনো ইউজার নেই</p>';
-  } catch (e) { handleErr(e); }
-}
-
-async function adjustBalance(id, sign) {
-  const amt = prompt(sign > 0 ? 'কত টাকা যোগ করবেন? (৳)' : 'কত টাকা কমাবেন? (৳)');
-  if (!amt) return;
-  const n = Math.abs(parseInt(amt, 10));
-  if (!n) { say('সঠিক পরিমাণ দিন'); return; }
-  const note = prompt('নোট (ঐচ্ছিক, যেমন: bKash ম্যানুয়াল ডিপোজিট)', 'অ্যাডমিন সমন্বয়') || 'অ্যাডমিন সমন্বয়';
-  try {
-    await api(`/api/admin/users/${id}/balance`, {
-      method: 'POST', body: JSON.stringify({ amount: sign * n, note }),
-    });
-    say('ব্যালেন্স আপডেট হয়েছে');
-    loadUsers();
-  } catch (e) { handleErr(e); }
-}
-
-async function ban(id) {
-  try { await api(`/api/admin/ban/${id}`, { method: 'POST' }); loadUsers(); } catch (e) { handleErr(e); }
-}
-async function unban(id) {
-  try { await api(`/api/admin/unban/${id}`, { method: 'POST' }); loadUsers(); } catch (e) { handleErr(e); }
-}
-
-// ---------- টুর্নামেন্ট ----------
-
-async function loadCategories() {
-  try {
-    const cats = await api('/api/admin/categories');
-    $('tCat').innerHTML = cats.map(c => `<option value="${Number(c.id)}">${esc(c.name)}</option>`).join('');
-  } catch (e) { handleErr(e); }
-}
-
-async function loadTournaments() {
-  try {
-    tourneys = await api('/api/admin/tournaments');
-    $('tourList').innerHTML = tourneys.map(t => `
-      <div class="card">
-        <b>${esc(t.name)}</b><br>
-        ${esc(t.match_type || '')} · ${esc(t.map_name || '')} · স্লট ${Number(t.joined)}/${Number(t.max_slots)}<br>
-        ফি ৳${Number(t.entry_fee)} · প্রতি কিল ৳${Number(t.per_kill)} · প্রাইজ ${esc(t.prize || '-')}<br>
-        সময়: ${esc(fmtTime(t.starts_at))} · স্ট্যাটাস: ${esc(t.status)}<br>
-        রুম: ${t.room_released ? `<b>প্রকাশিত</b> (${esc(t.room_id || '-')} / ${esc(t.room_password || '-')})` : 'লুকানো'}<br>
-        <button class="small" onclick="editTournament(${Number(t.id)})">এডিট</button>
-        ${t.room_released
-          ? `<button class="small grey" onclick="setRoom(${Number(t.id)}, false)">রুম লুকান</button>`
-          : `<button class="small ok" onclick="setRoom(${Number(t.id)}, true)">রুম প্রকাশ</button>`}
-        <button class="small danger" onclick="deleteTournament(${Number(t.id)})">মুছুন</button>
-      </div>`).join('') || '<p>কোনো টুর্নামেন্ট নেই</p>';
-  } catch (e) { handleErr(e); }
-}
-
-function readTForm() {
-  return {
-    name: $('tName').value,
-    category_id: $('tCat').value,
-    match_type: $('tType').value,
-    map_name: $('tMap').value,
-    max_slots: $('tSlots').value,
-    per_kill: $('tKill').value,
-    entry_fee: $('tFee').value,
-    prize: $('tPrize').value,
-    starts_at: $('tStart').value || null,
-    image_url: $('tImg').value,
-    status: $('tStatus').value,
-  };
-}
-
-async function saveTournament() {
-  const body = JSON.stringify(readTForm());
-  try {
-    if (editId) {
-      await api(`/api/admin/tournaments/${editId}`, { method: 'PUT', body });
-      say('টুর্নামেন্ট আপডেট হয়েছে');
-    } else {
-      await api('/api/admin/tournaments', { method: 'POST', body });
-      say('টুর্নামেন্ট যোগ হয়েছে');
-    }
-    resetTForm();
-    loadTournaments();
-  } catch (e) { handleErr(e); }
-}
-
-function editTournament(id) {
-  const t = tourneys.find(x => Number(x.id) === Number(id));
-  if (!t) return;
-  editId = t.id;
-  $('tFormTitle').textContent = 'এডিট: ' + t.name;
-  $('tName').value = t.name;
-  $('tCat').value = t.category_id || '';
-  $('tType').value = t.match_type || '';
-  $('tMap').value = t.map_name || '';
-  $('tSlots').value = t.max_slots;
-  $('tKill').value = t.per_kill;
-  $('tFee').value = t.entry_fee;
-  $('tPrize').value = t.prize || '';
-  $('tStart').value = t.starts_at ? String(t.starts_at).slice(0, 16) : '';
-  $('tImg').value = t.image_url || '';
-  $('tStatus').value = t.status;
-  $('tSave').textContent = 'আপডেট করুন';
-  $('tCancel').classList.remove('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function resetTForm() {
-  editId = null;
-  $('tFormTitle').textContent = 'নতুন টুর্নামেন্ট';
-  ['tName','tType','tPrize','tImg','tKill','tFee','tStart'].forEach(i => $(i).value = '');
-  $('tMap').value = 'Bermuda';
-  $('tSlots').value = '48';
-  $('tStatus').value = 'open';
-  $('tSave').textContent = 'যোগ করুন';
-  $('tCancel').classList.add('hidden');
-}
-
-async function setRoom(id, release) {
-  const t = tourneys.find(x => Number(x.id) === Number(id));
-  let roomId = t ? t.room_id || '' : '';
-  let pass = t ? t.room_password || '' : '';
-  if (release) {
-    roomId = prompt('রুম আইডি:', roomId);
-    if (roomId === null) return;
-    pass = prompt('রুম পাসওয়ার্ড:', pass);
-    if (pass === null) return;
-    if (!roomId.trim()) { say('রুম আইডি দিন'); return; }
-  }
-  try {
-    await api(`/api/admin/tournaments/${id}/room`, {
-      method: 'PUT',
-      body: JSON.stringify({ room_id: roomId, room_password: pass, release }),
-    });
-    say(release ? 'রুম প্রকাশ হয়েছে, জয়েন করা ইউজার দেখতে পাবে' : 'রুম লুকানো হয়েছে');
-    loadTournaments();
-  } catch (e) { handleErr(e); }
-}
-
-async function deleteTournament(id) {
-  if (!confirm('এই টুর্নামেন্ট মুছে ফেলবেন?')) return;
-  try {
-    await api(`/api/admin/tournaments/${id}`, { method: 'DELETE' });
-    say('মুছে ফেলা হয়েছে');
-    loadTournaments();
-  } catch (e) { handleErr(e); }
-}
-
-// ---------- সেটিংস ----------
-
-async function loadSettingsForm() {
-  try {
-    const s = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json());
-    $('sTitle').value = s.app_title || '';
-    $('sWelcome').value = s.welcome_text || '';
-    $('sBkash').value = s.bkash_number || '';
-    $('sNagad').value = s.nagad_number || '';
-    $('sRocket').value = s.rocket_number || '';
-  } catch {}
-}
-
-async function saveSettings(keys) {
-  const map = {
-    app_title: $('sTitle'), welcome_text: $('sWelcome'),
-    bkash_number: $('sBkash'), nagad_number: $('sNagad'), rocket_number: $('sRocket'),
-  };
-  const body = {};
-  keys.forEach(k => body[k] = map[k].value.trim());
-  try {
-    await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify(body) });
-    say('সেটিংস সেভ হয়েছে');
-  } catch (e) { handleErr(e); }
-}
-
-// ---------- শুরু ----------
-
-if (adminToken) showDash(); else wake();
-</script>
-</body>
-</html>
+const A = {
+  close: () => closeModal(),
+  go: v => setView(v),
+  refresh: () => renderView(),
+  logout: () => confirmBox('লগআউট করবেন?', logout, 'লগআউট', true),
+  settings: () => openSettings(),
+  'dep-filter': s => { S.depStatus = s; renderDeposits(); },
+  'wit-filter': s => { S.witStatus = s; renderWithdr
