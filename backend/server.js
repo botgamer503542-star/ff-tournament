@@ -126,7 +126,6 @@ app.get('/api/wallet', requireUser, wrap(async (req, res) => {
   res.json({ balance: rows[0] ? rows[0].balance : 0 });
 }));
 
-// ডিপোজিট ও উইথড্রয়ালের ইতিহাস (নিজের)
 app.get('/api/wallet/history', requireUser, wrap(async (req, res) => {
   const deposits = await pool.query(
     `SELECT id, method, amount, trx_id, status, created_at FROM deposits
@@ -140,7 +139,6 @@ app.get('/api/wallet/history', requireUser, wrap(async (req, res) => {
   res.json({ deposits: deposits.rows, withdrawals: withdrawals.rows, transactions: transactions.rows });
 }));
 
-// ডিপোজিট অনুরোধ: ব্যালেন্স এখানে বাড়ে না, অ্যাডমিন অনুমোদনের পর বাড়বে
 app.post('/api/deposits', requireUser, wrap(async (req, res) => {
   const method = String(req.body.method || '');
   const amount = toInt(req.body.amount);
@@ -163,7 +161,6 @@ app.post('/api/deposits', requireUser, wrap(async (req, res) => {
   res.json({ ok: true, message: 'ডিপোজিট অনুরোধ জমা হয়েছে। অ্যাডমিন যাচাই করে ব্যালেন্সে যোগ করবে।' });
 }));
 
-// উইথড্রয়াল অনুরোধ: ব্যালেন্স থেকে এখনই কেটে রাখা হয়, অ্যাডমিন পাঠালে পরিশোধিত, না হলে ফেরত
 app.post('/api/withdrawals', requireUser, wrap(async (req, res) => {
   const method = String(req.body.method || '');
   const amount = toInt(req.body.amount);
@@ -206,7 +203,8 @@ app.post('/api/withdrawals', requireUser, wrap(async (req, res) => {
   }
 }));
 
-// টুর্নামেন্ট তালিকা (ক্যাটাগরি ও জয়েন/স্লট সহ, রুম আইডি কখনো এখানে নয়)
+// ---------- টুর্নামেন্ট (ইউজার) ----------
+
 const TOURNAMENT_SELECT = `
   SELECT t.id, t.name, t.category_id, c.name AS category_name, c.slug AS category_slug,
          t.match_type, t.map_name, t.max_slots, t.per_kill, t.entry_fee, t.prize,
@@ -257,22 +255,40 @@ app.get('/api/tournaments/:id', requireUser, wrap(async (req, res) => {
   res.json(out);
 }));
 
+// জয়েন: Free Fire আইডির নাম নেয়, ব্যালেন্স কাটে, সব এক লেনদেনে
 app.post('/api/tournaments/:id/join', requireUser, wrap(async (req, res) => {
   const tid = Number(req.params.id);
+  const ffName = String(req.body.ff_name || '').trim().slice(0, 30);
+  if (ffName.length < 2) return res.status(400).json({ error: 'আপনার Free Fire আইডির নাম দিন' });
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const t = await client.query(
       'SELECT id, status, max_slots, entry_fee, name FROM tournaments WHERE id = $1 FOR UPDATE', [tid]);
-    if (!t.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' }); }
+    if (!t.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
+    }
     const tour = t.rows[0];
-    if (tour.status !== 'open') { await client.query('ROLLBACK'); return res.status(400).json({ error: 'এই টুর্নামেন্টে এখন জয়েন করা যাবে না' }); }
+    if (tour.status !== 'open') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'এই টুর্নামেন্টে এখন জয়েন করা যাবে না' });
+    }
 
-    const dup = await client.query('SELECT 1 FROM registrations WHERE user_id = $1 AND tournament_id = $2', [req.userId, tid]);
-    if (dup.rowCount) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'আগে থেকেই জয়েন করা আছে' }); }
+    const dup = await client.query(
+      'SELECT 1 FROM registrations WHERE user_id = $1 AND tournament_id = $2', [req.userId, tid]);
+    if (dup.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'আগে থেকেই জয়েন করা আছে' });
+    }
 
-    const cnt = await client.query('SELECT COUNT(*)::int AS n FROM registrations WHERE tournament_id = $1', [tid]);
-    if (cnt.rows[0].n >= tour.max_slots) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'স্লট পূর্ণ হয়ে গেছে' }); }
+    const cnt = await client.query(
+      'SELECT COUNT(*)::int AS n FROM registrations WHERE tournament_id = $1', [tid]);
+    if (cnt.rows[0].n >= tour.max_slots) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'স্লট পূর্ণ হয়ে গেছে' });
+    }
 
     const fee = toInt(tour.entry_fee);
     if (fee > 0) {
@@ -282,13 +298,19 @@ app.post('/api/tournaments/:id/join', requireUser, wrap(async (req, res) => {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: `পর্যাপ্ত ব্যালেন্স নেই। এন্ট্রি ফি ৳${fee}` });
       }
-      await client.query('UPDATE wallets SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2', [fee, req.userId]);
-      await client.query(`INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,'entry',$2,$3)`,
+      await client.query(
+        'UPDATE wallets SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2',
+        [fee, req.userId]);
+      await client.query(
+        `INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,'entry',$2,$3)`,
         [req.userId, -fee, tour.name]);
     }
-    await client.query('INSERT INTO registrations (user_id, tournament_id) VALUES ($1, $2)', [req.userId, tid]);
+
+    await client.query(
+      'INSERT INTO registrations (user_id, tournament_id, ff_name) VALUES ($1, $2, $3)',
+      [req.userId, tid, ffName]);
     await client.query('COMMIT');
-    res.json({ ok: true, message: 'জয়েন সফল' });
+    res.json({ ok: true, message: fee > 0 ? `জয়েন সফল! ৳${fee} কাটা হয়েছে` : 'জয়েন সফল!' });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     throw err;
@@ -300,7 +322,7 @@ app.post('/api/tournaments/:id/join', requireUser, wrap(async (req, res) => {
 app.get('/api/my-matches', requireUser, wrap(async (req, res) => {
   const { rows } = await pool.query(
     `SELECT t.id, t.name, c.name AS category_name, t.map_name, t.starts_at, t.status,
-            t.room_released, t.room_id, t.room_password, t.prize, t.per_kill
+            t.room_released, t.room_id, t.room_password, t.prize, t.per_kill, r.ff_name
      FROM registrations r
      JOIN tournaments t ON t.id = r.tournament_id
      LEFT JOIN categories c ON c.id = t.category_id
@@ -309,6 +331,7 @@ app.get('/api/my-matches', requireUser, wrap(async (req, res) => {
   res.json(rows.map(r => ({
     id: r.id, name: r.name, category_name: r.category_name, map_name: r.map_name,
     starts_at: r.starts_at, status: r.status, prize: r.prize, per_kill: r.per_kill,
+    ff_name: r.ff_name,
     room_id: r.room_released ? r.room_id : null,
     room_password: r.room_released ? r.room_password : null,
   })));
@@ -345,7 +368,6 @@ app.post('/api/admin/unban/:userId', requireAdmin, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
-// ম্যানুয়াল ব্যালেন্স যোগ (ডিপোজিট হিসেবে) বা কমানো
 app.post('/api/admin/users/:userId/balance', requireAdmin, wrap(async (req, res) => {
   const uid = Number(req.params.userId);
   const amount = toInt(req.body.amount);
@@ -357,9 +379,14 @@ app.post('/api/admin/users/:userId/balance', requireAdmin, wrap(async (req, res)
     if (!u.rowCount) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'ইউজার পাওয়া যায়নি' }); }
     await ensureWallet(client, uid);
     const cur = await client.query('SELECT balance FROM wallets WHERE user_id = $1 FOR UPDATE', [uid]);
-    if (cur.rows[0].balance + amount < 0) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'ব্যালেন্স ঋণাত্মক হতে পারবে না' }); }
-    await client.query('UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2', [amount, uid]);
-    await client.query(`INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,$2,$3,$4)`,
+    if (cur.rows[0].balance + amount < 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'ব্যালেন্স ঋণাত্মক হতে পারবে না' });
+    }
+    await client.query(
+      'UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2', [amount, uid]);
+    await client.query(
+      `INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,$2,$3,$4)`,
       [uid, amount > 0 ? 'deposit' : 'adjust', amount, String(req.body.note || 'অ্যাডমিন সমন্বয়').slice(0, 100)]);
     await client.query('COMMIT');
     res.json({ ok: true });
@@ -396,8 +423,10 @@ app.post('/api/admin/deposits/:id/approve', requireAdmin, wrap(async (req, res) 
     }
     const { user_id, amount, method, trx_id } = d.rows[0];
     await ensureWallet(client, user_id);
-    await client.query('UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2', [amount, user_id]);
-    await client.query(`INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,'deposit',$2,$3)`,
+    await client.query(
+      'UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2', [amount, user_id]);
+    await client.query(
+      `INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,'deposit',$2,$3)`,
       [user_id, amount, `${method} ডিপোজিট (${trx_id})`]);
     await client.query('COMMIT');
     res.json({ ok: true });
@@ -436,7 +465,6 @@ app.post('/api/admin/withdrawals/:id/paid', requireAdmin, wrap(async (req, res) 
   res.json({ ok: true });
 }));
 
-// বাতিল করলে টাকা ব্যালেন্সে ফেরত যায়
 app.post('/api/admin/withdrawals/:id/reject', requireAdmin, wrap(async (req, res) => {
   const client = await pool.connect();
   try {
@@ -451,8 +479,10 @@ app.post('/api/admin/withdrawals/:id/reject', requireAdmin, wrap(async (req, res
     }
     const { user_id, amount, method } = w.rows[0];
     await ensureWallet(client, user_id);
-    await client.query('UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2', [amount, user_id]);
-    await client.query(`INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,'adjust',$2,$3)`,
+    await client.query(
+      'UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2', [amount, user_id]);
+    await client.query(
+      `INSERT INTO transactions (user_id, type, amount, note) VALUES ($1,'adjust',$2,$3)`,
       [user_id, amount, `${method} উইথড্রয়াল বাতিল, টাকা ফেরত`]);
     await client.query('COMMIT');
     res.json({ ok: true });
@@ -464,7 +494,7 @@ app.post('/api/admin/withdrawals/:id/reject', requireAdmin, wrap(async (req, res
   }
 }));
 
-// ---- ক্যাটাগরি ও টুর্নামেন্ট ----
+// ---- ক্যাটাগরি ও টুর্নামেন্ট (অ্যাডমিন) ----
 
 app.get('/api/admin/categories', requireAdmin, wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT id, name, slug FROM categories ORDER BY sort_order, id');
@@ -540,9 +570,10 @@ app.delete('/api/admin/tournaments/:id', requireAdmin, wrap(async (req, res) => 
   res.json({ ok: true });
 }));
 
+// সেটিংস: সংখ্যাযুক্ত নামও গ্রহণ করে (যেমন banner_cs_2v2, banner_1v1)
 app.put('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
   for (const [key, value] of Object.entries(req.body || {})) {
-    if (!/^[a-z_]{1,50}$/.test(key)) continue;
+    if (!/^[a-z0-9_]{1,50}$/.test(key)) continue;
     await pool.query(
       `INSERT INTO settings (key, value) VALUES ($1, $2)
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
