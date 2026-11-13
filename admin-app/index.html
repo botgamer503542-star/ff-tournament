@@ -20,9 +20,11 @@ button.ok{background:var(--green);border:none;color:#fff}
 button.danger{background:var(--red);border:none;color:#fff}
 button.sm{padding:8px 12px;font-size:13px}
 button.block{width:100%}
-input,select{width:100%;padding:13px;margin-bottom:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;font-family:inherit}
-input:focus,select:focus{outline:none;border-color:var(--accent)}
+input,select,textarea{width:100%;padding:13px;margin-bottom:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px;font-family:inherit}
+textarea{min-height:120px;resize:vertical;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+.hint{font-size:12px;color:var(--muted);margin:-6px 0 12px;line-height:1.6}
 .muted{color:var(--muted);font-size:13px}
 .mono{font-family:ui-monospace,Menlo,monospace;letter-spacing:.5px}
 .gold{color:var(--gold)}
@@ -361,7 +363,7 @@ async function renderDash() {
     <h3>দ্রুত কাজ</h3>
     <div class="quick">
       <button class="primary" data-act="t-new">+ নতুন টুর্নামেন্ট</button>
-      <button data-act="settings">⚙️ সেটিংস ও পেমেন্ট নম্বর</button>
+      <button data-act="settings">⚙️ সেটিংস, সাপোর্ট ও পেমেন্ট নম্বর</button>
     </div>
     ${failed ? `<div class="notice">কিছু তথ্য আনা যায়নি। ইন্টারনেট দেখে "রিফ্রেশ" চাপুন।</div>` : ''}`;
 }
@@ -596,8 +598,13 @@ function openTourForm(id) {
     </div>
     <div class="two">
       <div><label>এন্ট্রি ফি (৳)</label><input id="fFee" type="number" value="${v(t && t.entry_fee, 0)}"></div>
-      <div><label>প্রাইজ পুল</label><input id="fPrize" value="${v(t && t.prize)}" placeholder="যেমন ৳১০০০"></div>
+      <div><label>প্রাইজ পুল (ছোট লেখা)</label><input id="fPrize" value="${v(t && t.prize)}" placeholder="যেমন ৳১০০০"></div>
     </div>
+    <label>প্রাইজ বিস্তারিত</label>
+    <textarea id="fPD" placeholder="যেমন:&#10;1st - ৳500&#10;2nd - ৳300&#10;3rd - ৳200&#10;Per Kill - ৳5">${esc(t && t.prize_details || '')}</textarea>
+    <div class="hint">যা লিখবেন ঠিক তাই ইউজার অ্যাপে দেখাবে। বাংলা, ইংরেজি, নতুন লাইন সব চলবে।</div>
+    <label>রুলস</label>
+    <textarea id="fRules" placeholder="যেমন:&#10;১. রুম আইডি ও পাসওয়ার্ড শুধু জয়েন করা ইউজার দেখবে।&#10;2. Hacker/Emulator নিষিদ্ধ।">${esc(t && t.rules || '')}</textarea>
     <label>শুরুর সময়</label><input id="fStart" type="datetime-local" value="${esc(startVal)}">
     <label>ছবির লিংক (ঐচ্ছিক)</label><input id="fImg" value="${v(t && t.image_url)}">
     <label>স্ট্যাটাস</label>
@@ -619,6 +626,8 @@ async function saveTour(id) {
     per_kill: $('fKill').value,
     entry_fee: $('fFee').value,
     prize: $('fPrize').value,
+    prize_details: $('fPD').value,
+    rules: $('fRules').value,
     starts_at: $('fStart').value || null,
     image_url: $('fImg').value,
     status: $('fStatus').value,
