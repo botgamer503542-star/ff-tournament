@@ -7,18 +7,22 @@
 <title>Admin</title>
 <style>
   body { font-family: sans-serif; background: #0f172a; color: #f1f5f9; margin: 0; padding: 16px; }
-  input, button, textarea { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+  input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
   button { background: #2563eb; color: white; }
+  button.small { width: auto; padding: 8px 12px; font-size: 14px; margin: 4px 4px 0 0; }
   .danger { background: #dc2626; }
+  .grey { background: #374151; }
   .card { background: #1e293b; padding: 12px; border-radius: 10px; margin: 8px 0; }
   .hidden { display: none; }
-  .msg { color: #fbbf24; min-height: 20px; }
+  .msg { color: #fbbf24; min-height: 22px; margin: 6px 0; }
+  h3 { margin-top: 24px; border-bottom: 1px solid #334155; padding-bottom: 6px; }
 </style>
 </head>
 <body>
 
 <div id="loginView">
   <h2>অ্যাডমিন লগইন</h2>
+  <div class="msg" id="serverMsg"></div>
   <input id="adminPass" type="password" placeholder="অ্যাডমিন পাসওয়ার্ড">
   <button onclick="adminLogin()">লগইন</button>
   <div class="msg" id="loginMsg"></div>
@@ -26,55 +30,103 @@
 
 <div id="dashView" class="hidden">
   <h2>ড্যাশবোর্ড</h2>
+  <div class="msg" id="dashMsg"></div>
 
   <h3>ইউজার তালিকা</h3>
-  <button onclick="loadUsers()">রিফ্রেশ</button>
+  <button class="grey" onclick="loadUsers()">রিফ্রেশ</button>
   <div id="userList"></div>
 
   <h3>টুর্নামেন্ট যোগ করুন</h3>
   <input id="tName" placeholder="টুর্নামেন্টের নাম">
   <input id="tStart" type="datetime-local">
-  <input id="tFee" type="number" placeholder="এন্ট্রি ফি">
+  <input id="tFee" type="number" placeholder="এন্ট্রি ফি (টাকা)">
   <input id="tPrize" placeholder="প্রাইজ">
+  <select id="tStatus">
+    <option value="open">open (জয়েন চালু)</option>
+    <option value="closed">closed (জয়েন বন্ধ)</option>
+    <option value="hidden">hidden (ইউজার দেখবে না)</option>
+  </select>
   <button onclick="addTournament()">যোগ করুন</button>
+
+  <h3>টুর্নামেন্ট তালিকা</h3>
+  <button class="grey" onclick="loadTournaments()">রিফ্রেশ</button>
+  <div id="tournamentList"></div>
 
   <h3>সেটিংস এডিট</h3>
   <input id="sTitle" placeholder="অ্যাপের শিরোনাম (app_title)">
   <input id="sWelcome" placeholder="স্বাগত বার্তা (welcome_text)">
   <button onclick="saveSettings()">সেভ করুন</button>
 
-  <div class="msg" id="dashMsg"></div>
-  <button onclick="logout()" class="danger">লগআউট</button>
+  <button class="danger" onclick="logout()">লগআউট</button>
 </div>
 
 <script>
 const API = 'https://production-o2k8.onrender.com';
 let adminToken = sessionStorage.getItem('adminToken') || '';
+let tournaments = [];
 
-async function api(path, options = {}) {
-  const res = await fetch(API + path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(adminToken ? { Authorization: 'Bearer ' + adminToken } : {}),
-    },
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'সমস্যা হয়েছে');
-  return data;
+const $ = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function setMsg(text, id = 'dashMsg') { $(id).textContent = text; }
+
+// নেটওয়ার্ক ব্যর্থ হলে (Render ঘুম থেকে উঠলে) কয়েকবার চেষ্টা করে
+async function api(path, opts = {}, tries = 3) {
+  for (let i = 1; i <= tries; i++) {
+    try {
+      const res = await fetch(API + path, {
+        cache: 'no-store',
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(adminToken ? { Authorization: 'Bearer ' + adminToken } : {}),
+          ...(opts.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'সমস্যা হয়েছে (' + res.status + ')');
+      return data;
+    } catch (e) {
+      if (e instanceof TypeError) {
+        if (i < tries) { await new Promise(r => setTimeout(r, 8000)); continue; }
+        throw new Error('সার্ভারে পৌঁছানো যাচ্ছে না। ১ মিনিট পর আবার চেষ্টা করুন।');
+      }
+      throw e;
+    }
+  }
+}
+
+function handleErr(e, id = 'dashMsg') {
+  setMsg(e.message, id);
+  if (e.message.includes('অনুমতি') || e.message.includes('মেয়াদ')) logout();
+}
+
+async function wakeServer() {
+  setMsg('সার্ভার চেক করা হচ্ছে...', 'serverMsg');
+  try {
+    await fetch(API + '/api/health', { cache: 'no-store' });
+    setMsg('সার্ভার প্রস্তুত', 'serverMsg');
+  } catch {
+    setMsg('সার্ভার জাগছে। ৬০ সেকেন্ড পর লগইন করুন।', 'serverMsg');
+  }
 }
 
 async function adminLogin() {
-  const msg = document.getElementById('loginMsg');
+  setMsg('লগইন হচ্ছে...', 'loginMsg');
   try {
     const data = await api('/api/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ password: adminPass.value }),
-    });
+      body: JSON.stringify({ password: $('adminPass').value }),
+    }, 2);
     adminToken = data.token;
     sessionStorage.setItem('adminToken', adminToken);
+    setMsg('', 'loginMsg');
     showDash();
-  } catch (e) { msg.textContent = e.message; }
+  } catch (e) { setMsg(e.message, 'loginMsg'); }
 }
 
 function logout() {
@@ -84,40 +136,55 @@ function logout() {
 }
 
 function showDash() {
-  document.getElementById('loginView').classList.add('hidden');
-  document.getElementById('dashView').classList.remove('hidden');
+  $('loginView').classList.add('hidden');
+  $('dashView').classList.remove('hidden');
   loadUsers();
+  loadTournaments();
   loadSettingsIntoForm();
 }
 
+// ---------- ইউজার ----------
+
 async function loadUsers() {
-  const list = document.getElementById('userList');
   try {
     const users = await api('/api/admin/users');
-    list.innerHTML = '';
-    users.forEach(u => {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <b>${u.name}</b> (${u.ff_id})<br>
-        ফোন: ${u.phone}<br>
+    $('userList').innerHTML = users.map(u => `
+      <div class="card">
+        <b>${esc(u.name)}</b> (${esc(u.ff_id)})<br>
+        ফোন: ${esc(u.phone)}<br>
         অবস্থা: ${u.is_banned ? 'ব্যান' : 'সক্রিয়'}<br>
-        <button class="${u.is_banned ? '' : 'danger'}"
-          onclick="${u.is_banned ? 'unban' : 'ban'}(${u.id})">
+        <button class="small ${u.is_banned ? '' : 'danger'}"
+          onclick="${u.is_banned ? 'unban' : 'ban'}(${Number(u.id)})">
           ${u.is_banned ? 'আনব্যান' : 'ব্যান করুন'}
-        </button>`;
-      list.appendChild(div);
-    });
-  } catch (e) { dashMsg.textContent = e.message; }
+        </button>
+      </div>`).join('') || '<p>এখনো কোনো ইউজার নেই</p>';
+  } catch (e) { handleErr(e); }
 }
 
 async function ban(id) {
-  await api(`/api/admin/ban/${id}`, { method: 'POST' });
-  loadUsers();
+  try { await api(`/api/admin/ban/${id}`, { method: 'POST' }); loadUsers(); }
+  catch (e) { handleErr(e); }
 }
+
 async function unban(id) {
-  await api(`/api/admin/unban/${id}`, { method: 'POST' });
-  loadUsers();
+  try { await api(`/api/admin/unban/${id}`, { method: 'POST' }); loadUsers(); }
+  catch (e) { handleErr(e); }
+}
+
+// ---------- টুর্নামেন্ট ----------
+
+async function loadTournaments() {
+  try {
+    tournaments = await api('/api/admin/tournaments');
+    $('tournamentList').innerHTML = tournaments.map(t => `
+      <div class="card">
+        <b>${esc(t.name)}</b><br>
+        ফি: ${esc(t.entry_fee)} টাকা | প্রাইজ: ${esc(t.prize || '-')}<br>
+        স্ট্যাটাস: ${esc(t.status)}<br>
+        <button class="small" onclick="editTournament(${Number(t.id)})">এডিট</button>
+        <button class="small danger" onclick="deleteTournament(${Number(t.id)})">মুছুন</button>
+      </div>`).join('') || '<p>এখনো কোনো টুর্নামেন্ট নেই</p>';
+  } catch (e) { handleErr(e); }
 }
 
 async function addTournament() {
@@ -125,22 +192,56 @@ async function addTournament() {
     await api('/api/admin/tournaments', {
       method: 'POST',
       body: JSON.stringify({
-        name: tName.value,
-        starts_at: tStart.value || null,
-        entry_fee: Number(tFee.value) || 0,
-        prize: tPrize.value,
-        status: 'open',
+        name: $('tName').value,
+        starts_at: $('tStart').value || null,
+        entry_fee: $('tFee').value,
+        prize: $('tPrize').value,
+        status: $('tStatus').value,
       }),
     });
-    dashMsg.textContent = 'টুর্নামেন্ট যোগ হয়েছে';
-  } catch (e) { dashMsg.textContent = e.message; }
+    setMsg('টুর্নামেন্ট যোগ হয়েছে');
+    $('tName').value = ''; $('tFee').value = ''; $('tPrize').value = '';
+    loadTournaments();
+  } catch (e) { handleErr(e); }
 }
+
+async function editTournament(id) {
+  const t = tournaments.find(x => Number(x.id) === Number(id));
+  if (!t) return;
+  const name = prompt('টুর্নামেন্টের নাম:', t.name);
+  if (name === null) return;
+  const fee = prompt('এন্ট্রি ফি:', t.entry_fee);
+  if (fee === null) return;
+  const prize = prompt('প্রাইজ:', t.prize || '');
+  if (prize === null) return;
+  const status = prompt('স্ট্যাটাস (open / closed / hidden):', t.status);
+  if (status === null) return;
+  try {
+    await api(`/api/admin/tournaments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, starts_at: t.starts_at, entry_fee: fee, prize, status: status.trim() }),
+    });
+    setMsg('আপডেট হয়েছে');
+    loadTournaments();
+  } catch (e) { handleErr(e); }
+}
+
+async function deleteTournament(id) {
+  if (!confirm('এই টুর্নামেন্টটি মুছে ফেলবেন?')) return;
+  try {
+    await api(`/api/admin/tournaments/${id}`, { method: 'DELETE' });
+    setMsg('মুছে ফেলা হয়েছে');
+    loadTournaments();
+  } catch (e) { handleErr(e); }
+}
+
+// ---------- সেটিংস ----------
 
 async function loadSettingsIntoForm() {
   try {
-    const s = await fetch(API + '/api/settings').then(r => r.json());
-    sTitle.value = s.app_title || '';
-    sWelcome.value = s.welcome_text || '';
+    const s = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json());
+    $('sTitle').value = s.app_title || '';
+    $('sWelcome').value = s.welcome_text || '';
   } catch {}
 }
 
@@ -149,15 +250,21 @@ async function saveSettings() {
     await api('/api/admin/settings', {
       method: 'PUT',
       body: JSON.stringify({
-        app_title: sTitle.value,
-        welcome_text: sWelcome.value,
+        app_title: $('sTitle').value,
+        welcome_text: $('sWelcome').value,
       }),
     });
-    dashMsg.textContent = 'সেভ হয়েছে';
-  } catch (e) { dashMsg.textContent = e.message; }
+    setMsg('সেটিংস সেভ হয়েছে');
+  } catch (e) { handleErr(e); }
 }
 
-if (adminToken) showDash();
+// ---------- শুরু ----------
+
+if (adminToken) {
+  showDash();
+} else {
+  wakeServer();
+}
 </script>
 </body>
 </html>
