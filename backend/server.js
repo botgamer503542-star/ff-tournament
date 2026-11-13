@@ -14,9 +14,8 @@ if (!JWT_SECRET || !ADMIN_PASSWORD) {
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '200kb' }));
 
-// async রাউটের ত্রুটি ধরে রাখে, যাতে সার্ভার বন্ধ না হয়
 const wrap = fn => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(err => {
     console.error(err);
@@ -26,6 +25,11 @@ const wrap = fn => (req, res, next) =>
 function bearer(req) {
   const h = req.headers.authorization || '';
   return h.startsWith('Bearer ') ? h.slice(7) : '';
+}
+
+function toInt(v, fallback = 0) {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 // ---------- মিডলওয়্যার ----------
@@ -78,6 +82,7 @@ app.post('/api/register', wrap(async (req, res) => {
      VALUES ($1, $2, $3, $4) RETURNING id, name, ff_id, phone`,
     [name, ff_id, phone, hash]
   );
+  await pool.query('INSERT INTO wallets (user_id, balance) VALUES ($1, 0) ON CONFLICT DO NOTHING', [rows[0].id]);
   res.json(rows[0]);
 }));
 
@@ -98,27 +103,180 @@ app.get('/api/settings', wrap(async (req, res) => {
   res.json(Object.fromEntries(rows.map(r => [r.key, r.value])));
 }));
 
-app.get('/api/tournaments', requireUser, wrap(async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT * FROM tournaments WHERE status <> 'hidden'
-     ORDER BY starts_at NULLS LAST, id DESC`
-  );
+app.get('/api/categories', wrap(async (req, res) => {
+  const { rows } = await pool.query('SELECT id, name, slug FROM categories ORDER BY sort_order, id');
   res.json(rows);
 }));
 
+app.get('/api/wallet', requireUser, wrap(async (req, res) => {
+  const { rows } = await pool.query('SELECT balance FROM wallets WHERE user_id = $1', [req.userId]);
+  res.json({ balance: rows[0] ? rows[0].balance : 0 });
+}));
+
+// টুর্নামেন্ট তালিকা: ক্যাটাগরি ও জয়েন/স্লট সহ
+// রুম আইডি এখানে কখনো পাঠানো হয় না
+const TOURNAMENT_SELECT = `
+  SELECT t.id, t.name, t.category_id, c.name AS category_name, c.slug AS category_slug,
+         t.match_type, t.map_name, t.max_slots, t.per_kill, t.entry_fee, t.prize,
+         t.starts_at, t.status, t.image_url,
+         (SELECT COUNT(*)::int FROM registrations r WHERE r.tournament_id = t.id) AS joined,
+         EXISTS (SELECT 1 FROM registrations r WHERE r.tournament_id = t.id AND r.user_id = $1) AS is_joined,
+         t.room_released
+  FROM tournaments t
+  LEFT JOIN categories c ON c.id = t.category_id
+`;
+
+app.get('/api/tournaments', requireUser, wrap(async (req, res) => {
+  const params = [req.userId];
+  let where = `WHERE t.status <> 'hidden'`;
+  if (req.query.category) {
+    params.push(String(req.query.category));
+    where += ` AND c.slug = $${params.length}`;
+  }
+  const { rows } = await pool.query(
+    `${TOURNAMENT_SELECT} ${where} ORDER BY t.starts_at NULLS LAST, t.id DESC`,
+    params
+  );
+  res.json(rows.map(publicTournament));
+}));
+
+function publicTournament(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    category_id: r.category_id,
+    category_name: r.category_name,
+    category_slug: r.category_slug,
+    match_type: r.match_type,
+    map_name: r.map_name,
+    max_slots: r.max_slots,
+    per_kill: r.per_kill,
+    entry_fee: r.entry_fee,
+    prize: r.prize,
+    starts_at: r.starts_at,
+    status: r.status,
+    image_url: r.image_url,
+    joined: r.joined,
+    available: Math.max(0, r.max_slots - r.joined),
+    is_joined: r.is_joined,
+  };
+}
+
+app.get('/api/tournaments/:id', requireUser, wrap(async (req, res) => {
+  const { rows } = await pool.query(
+    `${TOURNAMENT_SELECT} WHERE t.id = $2 AND t.status <> 'hidden'`,
+    [req.userId, Number(req.params.id)]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
+  const t = rows[0];
+  const out = publicTournament(t);
+  if (t.is_joined && t.room_released) {
+    const r = await pool.query('SELECT room_id, room_password FROM tournaments WHERE id = $1', [t.id]);
+    out.room_id = r.rows[0].room_id;
+    out.room_password = r.rows[0].room_password;
+  }
+  res.json(out);
+}));
+
+// জয়েন: স্লট, স্ট্যাটাস, ব্যালেন্স সব সার্ভারে যাচাই হয় এবং এক লেনদেনে হয়
 app.post('/api/tournaments/:id/join', requireUser, wrap(async (req, res) => {
   const tid = Number(req.params.id);
-  const t = await pool.query('SELECT status FROM tournaments WHERE id = $1', [tid]);
-  if (!t.rows.length) return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
-  if (t.rows[0].status !== 'open') {
-    return res.status(400).json({ error: 'এই টুর্নামেন্টে এখন জয়েন করা যাবে না' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const t = await client.query(
+      'SELECT id, status, max_slots, entry_fee, name FROM tournaments WHERE id = $1 FOR UPDATE',
+      [tid]
+    );
+    if (!t.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
+    }
+    const tour = t.rows[0];
+    if (tour.status !== 'open') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'এই টুর্নামেন্টে এখন জয়েন করা যাবে না' });
+    }
+
+    const dup = await client.query(
+      'SELECT 1 FROM registrations WHERE user_id = $1 AND tournament_id = $2',
+      [req.userId, tid]
+    );
+    if (dup.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'আগে থেকেই জয়েন করা আছে' });
+    }
+
+    const cnt = await client.query(
+      'SELECT COUNT(*)::int AS n FROM registrations WHERE tournament_id = $1',
+      [tid]
+    );
+    if (cnt.rows[0].n >= tour.max_slots) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'স্লট পূর্ণ হয়ে গেছে' });
+    }
+
+    const fee = toInt(tour.entry_fee);
+    if (fee > 0) {
+      const w = await client.query(
+        'SELECT balance FROM wallets WHERE user_id = $1 FOR UPDATE',
+        [req.userId]
+      );
+      const balance = w.rows[0] ? w.rows[0].balance : 0;
+      if (balance < fee) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `পর্যাপ্ত ব্যালেন্স নেই। এন্ট্রি ফি ৳${fee}` });
+      }
+      await client.query(
+        'UPDATE wallets SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2',
+        [fee, req.userId]
+      );
+      await client.query(
+        `INSERT INTO transactions (user_id, type, amount, note)
+         VALUES ($1, 'entry', $2, $3)`,
+        [req.userId, -fee, tour.name]
+      );
+    }
+
+    await client.query(
+      'INSERT INTO registrations (user_id, tournament_id) VALUES ($1, $2)',
+      [req.userId, tid]
+    );
+
+    await client.query('COMMIT');
+    res.json({ ok: true, message: 'জয়েন সফল' });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
-  const r = await pool.query(
-    'INSERT INTO registrations (user_id, tournament_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-    [req.userId, tid]
+}));
+
+app.get('/api/my-matches', requireUser, wrap(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT t.id, t.name, c.name AS category_name, t.map_name, t.starts_at, t.status,
+            t.room_released, t.room_id, t.room_password, t.prize, t.per_kill
+     FROM registrations r
+     JOIN tournaments t ON t.id = r.tournament_id
+     LEFT JOIN categories c ON c.id = t.category_id
+     WHERE r.user_id = $1
+     ORDER BY t.starts_at DESC NULLS LAST`,
+    [req.userId]
   );
-  if (!r.rowCount) return res.status(400).json({ error: 'আগে থেকেই জয়েন করা আছে' });
-  res.json({ ok: true });
+  res.json(rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    category_name: r.category_name,
+    map_name: r.map_name,
+    starts_at: r.starts_at,
+    status: r.status,
+    prize: r.prize,
+    per_kill: r.per_kill,
+    room_id: r.room_released ? r.room_id : null,
+    room_password: r.room_released ? r.room_password : null,
+  })));
 }));
 
 // ---------- অ্যাডমিন রাউট ----------
@@ -133,7 +291,10 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/users', requireAdmin, wrap(async (req, res) => {
   const { rows } = await pool.query(
-    'SELECT id, name, ff_id, phone, is_banned, created_at FROM users ORDER BY id DESC'
+    `SELECT u.id, u.name, u.ff_id, u.phone, u.is_banned, u.created_at,
+            COALESCE(w.balance, 0) AS balance
+     FROM users u LEFT JOIN wallets w ON w.user_id = u.id
+     ORDER BY u.id DESC`
   );
   res.json(rows);
 }));
@@ -150,18 +311,72 @@ app.post('/api/admin/unban/:userId', requireAdmin, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ইউজারের ব্যালেন্স যোগ/কমানো (ম্যানুয়াল, অ্যাডমিন দিয়ে)
+app.post('/api/admin/users/:userId/balance', requireAdmin, wrap(async (req, res) => {
+  const uid = Number(req.params.userId);
+  const amount = toInt(req.body.amount);
+  if (!amount) return res.status(400).json({ error: 'সঠিক পরিমাণ দিন' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const w = await client.query(
+      `INSERT INTO wallets (user_id, balance) VALUES ($1, 0)
+       ON CONFLICT (user_id) DO NOTHING`, [uid]
+    );
+    const cur = await client.query('SELECT balance FROM wallets WHERE user_id = $1 FOR UPDATE', [uid]);
+    if (!cur.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'ইউজার পাওয়া যায়নি' });
+    }
+    if (cur.rows[0].balance + amount < 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'ব্যালেন্স ঋণাত্মক হতে পারবে না' });
+    }
+    await client.query(
+      'UPDATE wallets SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2',
+      [amount, uid]
+    );
+    await client.query(
+      `INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, 'adjust', $2, $3)`,
+      [uid, amount, String(req.body.note || 'অ্যাডমিন সমন্বয়')]
+    );
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}));
+
+app.get('/api/admin/categories', requireAdmin, wrap(async (req, res) => {
+  const { rows } = await pool.query('SELECT id, name, slug FROM categories ORDER BY sort_order, id');
+  res.json(rows);
+}));
+
 function tournamentBody(b) {
+  const category = toInt(b.category_id, 0);
   return {
     name: String(b.name || '').trim(),
+    category_id: category || null,
+    match_type: String(b.match_type || 'BR').slice(0, 30),
+    map_name: String(b.map_name || 'Bermuda').slice(0, 40),
+    max_slots: Math.max(1, toInt(b.max_slots, 48)),
+    per_kill: Math.max(0, toInt(b.per_kill, 0)),
     starts_at: b.starts_at || null,
-    entry_fee: Math.max(0, parseInt(b.entry_fee, 10) || 0),
-    prize: String(b.prize || ''),
+    entry_fee: Math.max(0, toInt(b.entry_fee, 0)),
+    prize: String(b.prize || '').slice(0, 100),
+    image_url: b.image_url ? String(b.image_url).slice(0, 500) : null,
     status: ['open', 'closed', 'hidden'].includes(b.status) ? b.status : 'open',
   };
 }
 
 app.get('/api/admin/tournaments', requireAdmin, wrap(async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM tournaments ORDER BY id DESC');
+  const { rows } = await pool.query(
+    `SELECT t.*, (SELECT COUNT(*)::int FROM registrations r WHERE r.tournament_id = t.id) AS joined
+     FROM tournaments t ORDER BY t.id DESC`
+  );
   res.json(rows);
 }));
 
@@ -169,9 +384,11 @@ app.post('/api/admin/tournaments', requireAdmin, wrap(async (req, res) => {
   const t = tournamentBody(req.body);
   if (!t.name) return res.status(400).json({ error: 'টুর্নামেন্টের নাম দিন' });
   const { rows } = await pool.query(
-    `INSERT INTO tournaments (name, starts_at, entry_fee, prize, status)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [t.name, t.starts_at, t.entry_fee, t.prize, t.status]
+    `INSERT INTO tournaments
+       (name, category_id, match_type, map_name, max_slots, per_kill, starts_at, entry_fee, prize, image_url, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    [t.name, t.category_id, t.match_type, t.map_name, t.max_slots, t.per_kill,
+     t.starts_at, t.entry_fee, t.prize, t.image_url, t.status]
   );
   res.json(rows[0]);
 }));
@@ -180,12 +397,31 @@ app.put('/api/admin/tournaments/:id', requireAdmin, wrap(async (req, res) => {
   const t = tournamentBody(req.body);
   if (!t.name) return res.status(400).json({ error: 'টুর্নামেন্টের নাম দিন' });
   const { rows } = await pool.query(
-    `UPDATE tournaments SET name=$1, starts_at=$2, entry_fee=$3, prize=$4, status=$5
-     WHERE id=$6 RETURNING *`,
-    [t.name, t.starts_at, t.entry_fee, t.prize, t.status, Number(req.params.id)]
+    `UPDATE tournaments SET name=$1, category_id=$2, match_type=$3, map_name=$4, max_slots=$5,
+       per_kill=$6, starts_at=$7, entry_fee=$8, prize=$9, image_url=$10, status=$11
+     WHERE id=$12 RETURNING *`,
+    [t.name, t.category_id, t.match_type, t.map_name, t.max_slots, t.per_kill,
+     t.starts_at, t.entry_fee, t.prize, t.image_url, t.status, Number(req.params.id)]
   );
   if (!rows.length) return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
   res.json(rows[0]);
+}));
+
+// রুম আইডি/পাসওয়ার্ড সেট ও রিলিজ
+app.put('/api/admin/tournaments/:id/room', requireAdmin, wrap(async (req, res) => {
+  const release = req.body.release === true;
+  const { rows } = await pool.query(
+    `UPDATE tournaments SET room_id = $1, room_password = $2, room_released = $3
+     WHERE id = $4 RETURNING id, room_released`,
+    [
+      req.body.room_id ? String(req.body.room_id).slice(0, 50) : null,
+      req.body.room_password ? String(req.body.room_password).slice(0, 50) : null,
+      release,
+      Number(req.params.id),
+    ]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
+  res.json({ ok: true, room_released: rows[0].room_released });
 }));
 
 app.delete('/api/admin/tournaments/:id', requireAdmin, wrap(async (req, res) => {
