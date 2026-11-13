@@ -61,13 +61,14 @@ main{padding:14px}
 @keyframes mq{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
 .sec{margin:18px 0 10px;font-size:17px;font-weight:800}
 
-.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.cc{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0;color:var(--text);text-align:left;font-family:inherit;transition:transform .15s}
+.cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.cc{width:100%;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;padding:0;color:var(--text);text-align:left;font-family:inherit;transition:transform .15s}
 .cc:active{transform:scale(.98)}
-.cimg{height:118px;background:linear-gradient(135deg,var(--red2),#120508)}
-.cimg img{width:100%;height:100%;object-fit:cover;display:block}
+.cimg{height:auto;aspect-ratio:12/5;background:#111116;display:flex;align-items:center;justify-content:center}
+.cimg img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
 .cn{padding:10px 12px 2px;font-weight:800;font-size:15px}
 .cm{padding:0 12px 12px;font-size:12px;color:#ff6b78}
+@media (max-width:600px){.cimg{aspect-ratio:12/6}}
 
 .cathead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .cathead h2{margin:0;font-size:18px}
@@ -151,42 +152,7 @@ main{padding:14px}
 .toast.show{opacity:1;transform:none}
 .toast.success{border-color:var(--green)}
 .toast.error{border-color:#ef4444}
-/* ক্যাটাগরির ছবি: পুরো ছবি দেখাবে, কাটবে না */
-.cgrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px;
-}
-
-.cgrid .cc {
-  width: 100%;
-  overflow: hidden;
-  border-radius: 18px;
-}
-
-.cgrid .cimg {
-  height: auto;
-  aspect-ratio: 12 / 5;
-  background: #111116;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cgrid .cimg img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  display: block;
-}
-
-/* মোবাইলে একটু ছোট */
-@media (max-width: 600px) {
-  .cgrid .cimg {
-    aspect-ratio: 12 / 6;
-  }
-}</style>
+</style>
 </head>
 <body>
 
@@ -221,6 +187,7 @@ main{padding:14px}
   <header class="top">
     <div class="brand"><img src="icon-192.png" alt="" onerror="this.style.display='none'"><span id="brand">FF <b>BATTLE ZONE</b></span></div>
     <div class="top-r">
+      <button class="ib" data-act="support" title="সাপোর্ট">🎧</button>
       <button class="ib" data-act="soon" title="নোটিফিকেশন">🔔</button>
       <button class="ib" data-act="soon" title="ফলাফল">🏆</button>
       <button class="wchip" id="wChip" data-act="go" data-id="profile">৳ 0</button>
@@ -800,6 +767,13 @@ async function submitWit() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+function openSupport() {
+  const v = (SETTINGS.support_telegram || '').trim();
+  if (!v) { toast('সাপোর্ট টেলিগ্রাম এখনো সেট করা হয়নি'); return; }
+  const url = /^https?:\/\//.test(v) ? v : 'https://t.me/' + v.replace(/^@/, '');
+  window.open(url, '_blank');
+}
+
 const A = {
   close: () => closeModal(),
   login: () => login(),
@@ -808,6 +782,7 @@ const A = {
   go: id => showView(id, true),
   openCat: id => { S.cat = id; showView('cat', true); },
   soon: () => toast('এই ফিচারটি শীঘ্রই আসছে'),
+  support: () => openSupport(),
   join: id => openJoin(id),
   doJoin: id => doJoin(id),
   room: id => openRoom(id),
