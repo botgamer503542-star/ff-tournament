@@ -208,6 +208,7 @@ app.post('/api/withdrawals', requireUser, wrap(async (req, res) => {
 const TOURNAMENT_SELECT = `
   SELECT t.id, t.name, t.category_id, c.name AS category_name, c.slug AS category_slug,
          t.match_type, t.map_name, t.max_slots, t.per_kill, t.entry_fee, t.prize,
+         t.prize_details, t.rules,
          t.starts_at, t.status, t.image_url,
          (SELECT COUNT(*)::int FROM registrations r WHERE r.tournament_id = t.id) AS joined,
          EXISTS (SELECT 1 FROM registrations r WHERE r.tournament_id = t.id AND r.user_id = $1) AS is_joined,
@@ -222,6 +223,7 @@ function publicTournament(r) {
     category_name: r.category_name, category_slug: r.category_slug,
     match_type: r.match_type, map_name: r.map_name, max_slots: r.max_slots,
     per_kill: r.per_kill, entry_fee: r.entry_fee, prize: r.prize,
+    prize_details: r.prize_details, rules: r.rules,
     starts_at: r.starts_at, status: r.status, image_url: r.image_url,
     joined: r.joined, available: Math.max(0, r.max_slots - r.joined),
     is_joined: r.is_joined,
@@ -506,6 +508,8 @@ function tournamentBody(b) {
     starts_at: b.starts_at || null,
     entry_fee: Math.max(0, toInt(b.entry_fee, 0)),
     prize: String(b.prize || '').slice(0, 100),
+    prize_details: String(b.prize_details || '').slice(0, 3000),
+    rules: String(b.rules || '').slice(0, 5000),
     image_url: b.image_url ? String(b.image_url).slice(0, 500) : null,
     status: ['open', 'closed', 'hidden'].includes(b.status) ? b.status : 'open',
   };
@@ -523,10 +527,11 @@ app.post('/api/admin/tournaments', requireAdmin, wrap(async (req, res) => {
   if (!t.name) return res.status(400).json({ error: 'টুর্নামেন্টের নাম দিন' });
   const { rows } = await pool.query(
     `INSERT INTO tournaments
-       (name, category_id, match_type, map_name, max_slots, per_kill, starts_at, entry_fee, prize, image_url, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+       (name, category_id, match_type, map_name, max_slots, per_kill, starts_at, entry_fee, prize,
+        prize_details, rules, image_url, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
     [t.name, t.category_id, t.match_type, t.map_name, t.max_slots, t.per_kill,
-     t.starts_at, t.entry_fee, t.prize, t.image_url, t.status]);
+     t.starts_at, t.entry_fee, t.prize, t.prize_details, t.rules, t.image_url, t.status]);
   res.json(rows[0]);
 }));
 
@@ -535,10 +540,12 @@ app.put('/api/admin/tournaments/:id', requireAdmin, wrap(async (req, res) => {
   if (!t.name) return res.status(400).json({ error: 'টুর্নামেন্টের নাম দিন' });
   const { rows } = await pool.query(
     `UPDATE tournaments SET name=$1, category_id=$2, match_type=$3, map_name=$4, max_slots=$5,
-       per_kill=$6, starts_at=$7, entry_fee=$8, prize=$9, image_url=$10, status=$11
-     WHERE id=$12 RETURNING *`,
+       per_kill=$6, starts_at=$7, entry_fee=$8, prize=$9, prize_details=$10, rules=$11,
+       image_url=$12, status=$13
+     WHERE id=$14 RETURNING *`,
     [t.name, t.category_id, t.match_type, t.map_name, t.max_slots, t.per_kill,
-     t.starts_at, t.entry_fee, t.prize, t.image_url, t.status, Number(req.params.id)]);
+     t.starts_at, t.entry_fee, t.prize, t.prize_details, t.rules, t.image_url, t.status,
+     Number(req.params.id)]);
   if (!rows.length) return res.status(404).json({ error: 'টুর্নামেন্ট পাওয়া যায়নি' });
   res.json(rows[0]);
 }));
@@ -563,7 +570,6 @@ app.delete('/api/admin/tournaments/:id', requireAdmin, wrap(async (req, res) => 
   res.json({ ok: true });
 }));
 
-// টুর্নামেন্টের জয়েনার তালিকা: কে কোন নামে, কত টাকা দিয়ে জয়েন করেছে
 app.get('/api/admin/tournaments/:id/participants', requireAdmin, wrap(async (req, res) => {
   const { rows } = await pool.query(
     `SELECT r.id, r.ff_name, r.created_at, u.name, u.ff_id, u.phone, t.entry_fee
@@ -578,7 +584,6 @@ app.get('/api/admin/tournaments/:id/participants', requireAdmin, wrap(async (req
   res.json({ participants: rows, total_collected: total });
 }));
 
-// সেটিংস: সংখ্যাযুক্ত নামও গ্রহণ করে (যেমন banner_cs_2v2, support_telegram)
 app.put('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
   for (const [key, value] of Object.entries(req.body || {})) {
     if (!/^[a-z0-9_]{1,50}$/.test(key)) continue;
