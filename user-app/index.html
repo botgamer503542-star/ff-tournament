@@ -10,7 +10,7 @@
 :root {
   --bg: #0b0f1a; --card: #141b2d; --card2: #1b2540; --line: #243152;
   --text: #eef2ff; --muted: #8b97b5; --accent: #6d5efc; --accent2: #22d3ee;
-  --green: #22c55e; --red: #ef4444; --gold: #fbbf24; --pink: #f472b6;
+  --green: #22c55e; --red: #ef4444; --gold: #fbbf24; --pink: #f472b6; --amber: #f59e0b;
 }
 * { box-sizing: border-box; }
 body {
@@ -37,11 +37,9 @@ main { padding: 16px; }
 .muted { color: var(--muted); font-size: 14px; }
 .err { color: var(--red); }
 .msg { min-height: 22px; margin-top: 10px; color: var(--gold); font-size: 14px; text-align: center; }
+h3 { margin: 18px 0 10px; font-size: 17px; }
 
-.hero {
-  background: linear-gradient(135deg, #6d5efc, #22d3ee);
-  border-radius: 18px; padding: 18px; margin-bottom: 16px;
-}
+.hero { background: linear-gradient(135deg, #6d5efc, #22d3ee); border-radius: 18px; padding: 18px; margin-bottom: 16px; }
 .hero h2 { margin: 0 0 6px; font-size: 20px; }
 .hero p { margin: 0; font-size: 14px; opacity: .92; }
 
@@ -54,20 +52,10 @@ main { padding: 16px; }
 }
 .cat.on { color: #fff; background: linear-gradient(135deg, #6d5efc, #22d3ee); border-color: transparent; }
 
-.t-card {
-  background: var(--card); border: 1px solid var(--line);
-  border-radius: 18px; overflow: hidden; margin-bottom: 14px;
-  animation: rise .35s ease both;
-}
+.t-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-bottom: 14px; animation: rise .35s ease both; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.t-banner {
-  height: 120px; display: flex; align-items: center; justify-content: center;
-  position: relative; font-size: 48px; background-size: cover; background-position: center;
-}
-.badge {
-  position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 700;
-  padding: 4px 10px; border-radius: 999px; color: #fff; background: rgba(0,0,0,.45);
-}
+.t-banner { height: 120px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 48px; background-size: cover; background-position: center; }
+.badge { position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #fff; background: rgba(0,0,0,.45); }
 .badge.up { background: var(--green); }
 .badge.full { background: var(--red); }
 .badge.closed { background: #475569; }
@@ -75,10 +63,7 @@ main { padding: 16px; }
 .t-body { padding: 14px; }
 .t-body h4 { margin: 0 0 4px; font-size: 17px; }
 .when { font-size: 13px; color: var(--muted); }
-.countdown {
-  margin: 10px 0; padding: 9px; border-radius: 12px; font-size: 14px;
-  background: var(--card2); text-align: center;
-}
+.countdown { margin: 10px 0; padding: 9px; border-radius: 12px; font-size: 14px; background: var(--card2); text-align: center; }
 .countdown b { color: var(--accent2); font-size: 16px; }
 .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
 .stat { background: var(--card2); border-radius: 12px; padding: 9px 6px; text-align: center; }
@@ -91,85 +76,55 @@ main { padding: 16px; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg,#6d5efc,#22d3ee); }
 
 .row { display: flex; gap: 8px; }
-.btn {
-  flex: 1; width: 100%; padding: 13px; border: none; border-radius: 12px; cursor: pointer;
-  background: linear-gradient(135deg, #6d5efc, #22d3ee);
-  color: #fff; font-size: 15px; font-weight: 700;
-}
+.btn { flex: 1; width: 100%; padding: 13px; border: none; border-radius: 12px; cursor: pointer; background: linear-gradient(135deg, #6d5efc, #22d3ee); color: #fff; font-size: 15px; font-weight: 700; }
 .btn.ghost { background: var(--card2); color: var(--text); border: 1px solid var(--line); }
 .btn.danger { background: var(--red); }
+.btn.green { background: var(--green); }
 .btn:disabled { background: var(--card2); color: var(--muted); cursor: not-allowed; }
 .btn.small { width: auto; padding: 10px 14px; font-size: 14px; }
 
 .seg { display: flex; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 18px; }
-.seg button {
-  flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer;
-  background: transparent; color: var(--muted); font-weight: 600; font-size: 15px;
-}
+.seg button { flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer; background: transparent; color: var(--muted); font-weight: 600; font-size: 15px; }
 .seg button.on { background: var(--accent); color: #fff; }
 .field label { display: block; font-size: 14px; color: var(--muted); margin: 4px 0 6px; }
-.field input {
-  width: 100%; padding: 14px; margin-bottom: 14px; border-radius: 12px;
-  border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 16px;
-}
-.field input:focus { outline: none; border-color: var(--accent); }
+.field input, .field select { width: 100%; padding: 14px; margin-bottom: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 16px; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
 
-.match {
-  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-  padding: 14px; margin-bottom: 12px;
-}
+.note { background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 14px; line-height: 1.7; }
+.note b { color: var(--accent2); }
+.note.warn { border-color: var(--amber); color: #fde68a; }
+
+.match { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
 .match h4 { margin: 0 0 6px; font-size: 16px; }
-.cred {
-  margin-top: 10px; padding: 10px; border-radius: 12px; background: var(--card2);
-  font-size: 15px; line-height: 1.7;
-}
+.cred { margin-top: 10px; padding: 10px; border-radius: 12px; background: var(--card2); font-size: 15px; line-height: 1.7; }
 .cred b { color: var(--accent2); }
 
-.wallet-card {
-  background: linear-gradient(135deg, #6d5efc, #22d3ee);
-  border-radius: 18px; padding: 22px; text-align: center; margin-bottom: 16px;
-}
+.wallet-card { background: linear-gradient(135deg, #6d5efc, #22d3ee); border-radius: 18px; padding: 22px; text-align: center; margin-bottom: 16px; }
 .wallet-card small { opacity: .9; }
 .wallet-card h2 { margin: 6px 0 0; font-size: 34px; }
 
+.hist { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; font-size: 14px; }
+.hist .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.st { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.st.pending { background: var(--amber); color: #111; }
+.st.approved, .st.paid { background: var(--green); color: #fff; }
+.st.rejected { background: var(--red); color: #fff; }
+
 .profile { text-align: center; padding: 20px 0; }
-.avatar {
-  width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 50%;
-  background: linear-gradient(135deg, #6d5efc, #22d3ee);
-  display: flex; align-items: center; justify-content: center; font-size: 40px;
-}
+.avatar { width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 50%; background: linear-gradient(135deg, #6d5efc, #22d3ee); display: flex; align-items: center; justify-content: center; font-size: 40px; }
 .profile h3 { margin: 0 0 4px; font-size: 20px; }
 
-.bottom-nav {
-  position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 20;
-  display: flex; background: var(--card); border: 1px solid var(--line);
-  border-radius: 20px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.45);
-}
-.nav-btn {
-  flex: 1; background: none; border: none; color: var(--muted); cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  font-size: 12px; padding: 8px 0; border-radius: 14px;
-}
+.bottom-nav { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 20; display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.nav-btn { flex: 1; background: none; border: none; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; padding: 8px 0; border-radius: 14px; }
 .nav-btn span { font-size: 19px; }
 .nav-btn.on { color: var(--text); background: rgba(109,94,252,.22); }
 
-.modal {
-  position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 40;
-  display: flex; align-items: flex-end; justify-content: center;
-}
-.sheet {
-  width: 100%; max-width: 520px; background: var(--card); border-radius: 22px 22px 0 0;
-  padding: 20px; max-height: 80vh; overflow-y: auto;
-}
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 520px; background: var(--card); border-radius: 22px 22px 0 0; padding: 20px; max-height: 80vh; overflow-y: auto; }
 .sheet h3 { margin: 0 0 12px; }
 .sheet p { margin: 6px 0; font-size: 15px; line-height: 1.6; }
 
-.toast {
-  position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px);
-  background: var(--card2); border: 1px solid var(--line); padding: 12px 18px;
-  border-radius: 12px; font-size: 14px; opacity: 0; transition: .25s; z-index: 50;
-  max-width: 90%; text-align: center; pointer-events: none;
-}
+.toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); background: var(--card2); border: 1px solid var(--line); padding: 12px 18px; border-radius: 12px; font-size: 14px; opacity: 0; transition: .25s; z-index: 50; max-width: 90%; text-align: center; pointer-events: none; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .empty { text-align: center; padding: 36px 0; color: var(--muted); }
 </style>
@@ -189,13 +144,11 @@ main { padding: 16px; }
       <button id="segLogin" class="on" onclick="showAuth('login')">লগইন</button>
       <button id="segReg" onclick="showAuth('reg')">রেজিস্ট্রেশন</button>
     </div>
-
     <div id="loginForm">
       <div class="field"><label>ফোন নম্বর</label><input id="lPhone" inputmode="tel"></div>
       <div class="field"><label>পাসওয়ার্ড</label><input id="lPass" type="password"></div>
       <button class="btn" onclick="login()">লগইন করুন</button>
     </div>
-
     <div id="regForm" class="hidden">
       <div class="field"><label>আপনার নাম</label><input id="rName"></div>
       <div class="field"><label>Free Fire UID</label><input id="rFF" inputmode="numeric"></div>
@@ -230,8 +183,49 @@ main { padding: 16px; }
       <small>বর্তমান ব্যালেন্স</small>
       <h2 id="walletBal">৳ 0</h2>
     </div>
-    <p class="muted" style="text-align:center">ডিপোজিট ও উইথড্রয়াল শিগগিরই যোগ হচ্ছে। এখন শুধু ব্যালেন্স দেখানো হচ্ছে।</p>
-    <button class="btn ghost" onclick="loadWallet()">ব্যালেন্স রিফ্রেশ</button>
+
+    <div class="seg">
+      <button id="wDep" class="on" onclick="walletTab('dep')">ডিপোজিট</button>
+      <button id="wWit" onclick="walletTab('wit')">উইথড্রয়াল</button>
+    </div>
+
+    <!-- ডিপোজিট -->
+    <div id="depBox">
+      <div class="field">
+        <label>মাধ্যম</label>
+        <select id="dMethod" onchange="showPayNumber()">
+          <option value="bkash">bKash</option>
+          <option value="nagad">Nagad</option>
+          <option value="rocket">Rocket</option>
+        </select>
+      </div>
+      <div class="note" id="payNumber">নম্বর লোড হচ্ছে...</div>
+      <div class="field"><label>পরিমাণ (৳)</label><input id="dAmount" inputmode="numeric"></div>
+      <div class="field"><label>যে নম্বর থেকে টাকা পাঠিয়েছেন</label><input id="dSender" inputmode="tel"></div>
+      <div class="field"><label>Transaction ID (TrxID)</label><input id="dTrx" autocapitalize="characters"></div>
+      <button class="btn" onclick="submitDeposit()">ডিপোজিট অনুরোধ পাঠান</button>
+      <div class="note warn" style="margin-top:12px">টাকা পাঠানোর পর অনুরোধ দিন। অ্যাডমিন যাচাই করে অনুমোদন করলে ব্যালেন্সে যোগ হবে।</div>
+    </div>
+
+    <!-- উইথড্রয়াল -->
+    <div id="witBox" class="hidden">
+      <div class="field">
+        <label>মাধ্যম</label>
+        <select id="wMethod">
+          <option value="bkash">bKash</option>
+          <option value="nagad">Nagad</option>
+          <option value="rocket">Rocket</option>
+        </select>
+      </div>
+      <div class="field"><label>পরিমাণ (৳, সর্বনিম্ন ৫০)</label><input id="wAmount" inputmode="numeric"></div>
+      <div class="field"><label>যে নম্বরে টাকা নেবেন</label><input id="wAccount" inputmode="tel"></div>
+      <button class="btn" onclick="submitWithdraw()">উইথড্রয়াল অনুরোধ</button>
+      <div class="note warn" style="margin-top:12px">অনুরোধ করলে ব্যালেন্স থেকে টাকা এখনই কেটে রাখা হবে। বাতিল হলে টাকা ফেরত যাবে।</div>
+    </div>
+
+    <h3>ডিপোজিট ও উইথড্রয়াল ইতিহাস</h3>
+    <div id="history"></div>
+    <button class="btn ghost small" onclick="loadWallet()" style="margin-top:6px">রিফ্রেশ</button>
   </section>
 
   <!-- প্রোফাইল -->
@@ -265,12 +259,14 @@ const $ = id => document.getElementById(id);
 
 let token = localStorage.getItem('token') || '';
 let userName = localStorage.getItem('userName') || '';
-let categories = [];
 let activeCat = '';
 let tournaments = [];
+let payNumbers = {};
 
 const COLORS = [['#6d5efc','#22d3ee'], ['#f97316','#ef4444'], ['#10b981','#3b82f6'], ['#ec4899','#8b5cf6'], ['#eab308','#f97316']];
 const ICONS = ['🔫', '💥', '🎯', '⚔️', '🏆'];
+const STATUS_BN = { pending: 'অপেক্ষমাণ', approved: 'অনুমোদিত', paid: 'পরিশোধিত', rejected: 'বাতিল' };
+const METHOD_BN = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket' };
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
@@ -282,7 +278,7 @@ function toast(m) {
   el.textContent = m;
   el.classList.add('show');
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => el.classList.remove('show'), 2600);
+  toast.t = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
 // Render ঘুম থেকে উঠলে কয়েকবার চেষ্টা করে
@@ -312,11 +308,7 @@ async function api(path, opts = {}, tries = 3) {
 
 function isAuthErr(e) { return /অনুমতি|মেয়াদ|ব্যান/.test(e.message); }
 
-// ---------- সময় ----------
-// ডেটাবেসের সময় যেমন লেখা হয়েছে তেমনই দেখাই
-function cleanTime(s) {
-  return s ? String(s).replace('Z', '').replace('T', ' ').slice(0, 16) : '';
-}
+function cleanTime(s) { return s ? String(s).replace('Z', '').replace('T', ' ').slice(0, 16) : ''; }
 function localDate(clean) {
   const [d, t] = clean.split(' ');
   const [y, m, dd] = d.split('-').map(Number);
@@ -373,10 +365,7 @@ function logout(msg = '') {
 // ---------- অ্যাকাউন্ট ----------
 
 async function register() {
-  if ($('rPass').value !== $('rPass2').value) {
-    $('authMsg').textContent = 'দুটো পাসওয়ার্ড মিলছে না';
-    return;
-  }
+  if ($('rPass').value !== $('rPass2').value) { $('authMsg').textContent = 'দুটো পাসওয়ার্ড মিলছে না'; return; }
   $('authMsg').textContent = 'অ্যাকাউন্ট খোলা হচ্ছে...';
   try {
     await api('/api/register', {
@@ -422,13 +411,19 @@ async function loadSettings() {
     const s = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json());
     if (s.app_title) $('brand').innerHTML = esc(s.app_title);
     if (s.welcome_text) $('sub').textContent = s.welcome_text;
+    payNumbers = {
+      bkash: s.bkash_number || '',
+      nagad: s.nagad_number || '',
+      rocket: s.rocket_number || '',
+    };
+    showPayNumber();
   } catch {}
 }
 
 async function loadCategories() {
   try {
-    categories = await fetch(API + '/api/categories', { cache: 'no-store' }).then(r => r.json());
-    $('cats').innerHTML = [{ slug: '', name: 'সব' }, ...categories]
+    const cats = await fetch(API + '/api/categories', { cache: 'no-store' }).then(r => r.json());
+    $('cats').innerHTML = [{ slug: '', name: 'সব' }, ...cats]
       .map(c => `<button class="cat ${c.slug === activeCat ? 'on' : ''}"
                    onclick="setCat('${esc(c.slug)}')">${esc(c.name)}</button>`).join('');
   } catch {}
@@ -442,15 +437,84 @@ function setCat(slug) {
 
 // ---------- ওয়ালেট ----------
 
+function walletTab(which) {
+  const dep = which === 'dep';
+  $('depBox').classList.toggle('hidden', !dep);
+  $('witBox').classList.toggle('hidden', dep);
+  $('wDep').classList.toggle('on', dep);
+  $('wWit').classList.toggle('on', !dep);
+}
+
+function showPayNumber() {
+  const m = $('dMethod').value;
+  const num = payNumbers[m];
+  $('payNumber').innerHTML = num
+    ? `এই ${METHOD_BN[m]} নম্বরে <b>Send Money</b> করুন:<br><b style="font-size:18px">${esc(num)}</b>`
+    : `${METHOD_BN[m]} নম্বর এখনো সেট করা হয়নি। অ্যাডমিনের সঙ্গে যোগাযোগ করুন।`;
+}
+
 async function loadWallet() {
   if (!token) return;
   try {
-    const w = await api('/api/wallet');
+    const [w, h] = await Promise.all([api('/api/wallet'), api('/api/wallet/history')]);
     $('walletBal').textContent = '৳ ' + w.balance;
     $('walletChip').textContent = '৳ ' + w.balance;
+    renderHistory(h);
   } catch (e) {
+    $('history').innerHTML = `<p class="err">${esc(e.message)}</p>`;
     if (isAuthErr(e)) logout(e.message);
   }
+}
+
+function renderHistory(h) {
+  const dep = h.deposits.map(d => `
+    <div class="hist">
+      <div class="top"><b>ডিপোজিট · ${esc(METHOD_BN[d.method] || d.method)}</b>
+        <span class="st ${esc(d.status)}">${esc(STATUS_BN[d.status] || d.status)}</span></div>
+      ৳${Number(d.amount)} · TrxID: ${esc(d.trx_id)}<br>
+      <span class="muted">${esc(cleanTime(d.created_at))}</span>
+    </div>`);
+  const wit = h.withdrawals.map(w => `
+    <div class="hist">
+      <div class="top"><b>উইথড্রয়াল · ${esc(METHOD_BN[w.method] || w.method)}</b>
+        <span class="st ${esc(w.status)}">${esc(STATUS_BN[w.status] || w.status)}</span></div>
+      ৳${Number(w.amount)} · নম্বর: ${esc(w.account_number)}<br>
+      <span class="muted">${esc(cleanTime(w.created_at))}</span>
+    </div>`);
+  const all = [...dep, ...wit];
+  $('history').innerHTML = all.length ? all.join('') : '<div class="empty">এখনো কোনো ডিপোজিট বা উইথড্রয়াল নেই</div>';
+}
+
+async function submitDeposit() {
+  const body = {
+    method: $('dMethod').value,
+    amount: $('dAmount').value,
+    sender_number: $('dSender').value,
+    trx_id: $('dTrx').value,
+  };
+  if (!body.amount || !body.sender_number || !body.trx_id) { toast('সব ঘর পূরণ করুন'); return; }
+  try {
+    const r = await api('/api/deposits', { method: 'POST', body: JSON.stringify(body) });
+    toast(r.message);
+    $('dAmount').value = ''; $('dSender').value = ''; $('dTrx').value = '';
+    loadWallet();
+  } catch (e) { toast(e.message); }
+}
+
+async function submitWithdraw() {
+  const body = {
+    method: $('wMethod').value,
+    amount: $('wAmount').value,
+    account_number: $('wAccount').value,
+  };
+  if (!body.amount || !body.account_number) { toast('পরিমাণ ও নম্বর দিন'); return; }
+  if (!confirm(`৳${body.amount} উইথড্রয়াল অনুরোধ করবেন? টাকা এখনই ব্যালেন্স থেকে কাটা হবে।`)) return;
+  try {
+    const r = await api('/api/withdrawals', { method: 'POST', body: JSON.stringify(body) });
+    toast(r.message);
+    $('wAmount').value = ''; $('wAccount').value = '';
+    loadWallet();
+  } catch (e) { toast(e.message); }
 }
 
 // ---------- টুর্নামেন্ট ----------
@@ -460,17 +524,13 @@ async function loadTournaments() {
   try {
     const q = activeCat ? '?category=' + encodeURIComponent(activeCat) : '';
     tournaments = await api('/api/tournaments' + q);
-    renderList();
+    $('list').innerHTML = tournaments.map(card).join('') ||
+      '<div class="empty">এই ক্যাটাগরিতে এখন কোনো টুর্নামেন্ট নেই</div>';
   } catch (e) {
     $('list').innerHTML = `<p class="err" style="text-align:center">${esc(e.message)}</p>
       <div style="text-align:center"><button class="btn small" onclick="loadTournaments()">আবার চেষ্টা করুন</button></div>`;
     if (isAuthErr(e)) logout(e.message);
   }
-}
-
-function renderList() {
-  $('list').innerHTML = tournaments.map(card).join('') ||
-    '<div class="empty">এই ক্যাটাগরিতে এখন কোনো টুর্নামেন্ট নেই</div>';
 }
 
 function statusOf(t) {
@@ -486,15 +546,10 @@ function card(t) {
   const icon = ICONS[id % ICONS.length];
   const [cls, label] = statusOf(t);
   const clean = cleanTime(t.starts_at);
-  const when = clean
-    ? localDate(clean).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' })
-    : 'সময় ঘোষণা হবে';
-  const bg = t.image_url
-    ? `background-image:url('${esc(t.image_url)}')`
-    : `background:linear-gradient(135deg,${c1},${c2})`;
+  const when = clean ? localDate(clean).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }) : 'সময় ঘোষণা হবে';
+  const bg = t.image_url ? `background-image:url('${esc(t.image_url)}')` : `background:linear-gradient(135deg,${c1},${c2})`;
   const pct = t.max_slots ? Math.min(100, Math.round((t.joined / t.max_slots) * 100)) : 0;
   const canJoin = cls === 'up';
-
   return `
     <div class="t-card">
       <div class="t-banner" style="${bg}">
@@ -511,8 +566,7 @@ function card(t) {
           <div class="stat"><small>এন্ট্রি ফি</small><b class="pink">৳ ${Number(t.entry_fee) || 0}</b></div>
         </div>
         <div class="when">🗺️ ${esc(t.map_name || '-')}</div>
-        <div class="slots"><span>জয়েন: ${Number(t.joined)}/${Number(t.max_slots)}</span>
-          <span>বাকি স্লট: ${Number(t.available)}</span></div>
+        <div class="slots"><span>জয়েন: ${Number(t.joined)}/${Number(t.max_slots)}</span><span>বাকি স্লট: ${Number(t.available)}</span></div>
         <div class="bar"><i style="width:${pct}%"></i></div>
         <div class="row">
           <button class="btn ghost" onclick="showPrize(${id})">প্রাইজ বিস্তারিত</button>
@@ -572,7 +626,7 @@ async function loadMyMatches() {
         <div class="match">
           <h4>${esc(m.name)}</h4>
           <div class="when">${esc(m.category_name || '')} · 🗺️ ${esc(m.map_name || '-')} · 📅 ${esc(when)}</div>
-          <div class="when">স্ট্যাটাস: ${esc(m.status === 'open' ? 'আপকামিং' : m.status)} · প্রাইজ: ${esc(m.prize || '-')}</div>
+          <div class="when">প্রাইজ: ${esc(m.prize || '-')}</div>
           ${room}
         </div>`;
     }).join('') || '<div class="empty">আপনি এখনো কোনো ম্যাচে জয়েন করেননি</div>';
@@ -598,4 +652,4 @@ if (token) {
 }
 </script>
 </body>
-  </html>
+</html>
