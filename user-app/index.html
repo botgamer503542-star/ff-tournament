@@ -2,69 +2,295 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#111827">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
 <link rel="manifest" href="manifest.json">
 <title>FF Tournament</title>
 <style>
-  body { font-family: sans-serif; background: #111827; color: #f9fafb; margin: 0; padding: 16px; }
-  input, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
-  button { background: #2563eb; color: white; }
-  button.grey { background: #374151; }
-  .card { background: #1f2937; padding: 14px; border-radius: 10px; margin: 10px 0; }
-  .hidden { display: none; }
-  .msg { color: #fbbf24; min-height: 22px; margin: 6px 0; }
+:root {
+  --bg: #0b0f1a; --card: #141b2d; --card2: #1b2540; --line: #243152;
+  --text: #eef2ff; --muted: #8b97b5; --accent: #6d5efc; --accent2: #22d3ee;
+  --green: #22c55e; --red: #ef4444; --gold: #fbbf24; --pink: #f472b6;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: system-ui, "Noto Sans Bengali", sans-serif;
+  background: var(--bg); color: var(--text);
+  padding-bottom: 96px; -webkit-tap-highlight-color: transparent;
+}
+.hidden { display: none !important; }
+header {
+  position: sticky; top: 0; z-index: 10; padding: 14px 16px;
+  background: rgba(11,15,26,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand { font-weight: 800; font-size: 20px; }
+.brand span { color: var(--accent2); }
+.wallet-chip {
+  background: var(--card2); border: 1px solid var(--line);
+  padding: 6px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--gold);
+}
+main { padding: 16px; }
+.view { display: none; }
+.view.on { display: block; }
+.muted { color: var(--muted); font-size: 14px; }
+.err { color: var(--red); }
+.msg { min-height: 22px; margin-top: 10px; color: var(--gold); font-size: 14px; text-align: center; }
+
+.hero {
+  background: linear-gradient(135deg, #6d5efc, #22d3ee);
+  border-radius: 18px; padding: 18px; margin-bottom: 16px;
+}
+.hero h2 { margin: 0 0 6px; font-size: 20px; }
+.hero p { margin: 0; font-size: 14px; opacity: .92; }
+
+.cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 6px; scrollbar-width: none; }
+.cats::-webkit-scrollbar { display: none; }
+.cat {
+  flex: 0 0 auto; padding: 9px 14px; border-radius: 999px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--muted); font-size: 14px; font-weight: 600; white-space: nowrap;
+}
+.cat.on { color: #fff; background: linear-gradient(135deg, #6d5efc, #22d3ee); border-color: transparent; }
+
+.t-card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 18px; overflow: hidden; margin-bottom: 14px;
+  animation: rise .35s ease both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.t-banner {
+  height: 120px; display: flex; align-items: center; justify-content: center;
+  position: relative; font-size: 48px; background-size: cover; background-position: center;
+}
+.badge {
+  position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px; color: #fff; background: rgba(0,0,0,.45);
+}
+.badge.up { background: var(--green); }
+.badge.full { background: var(--red); }
+.badge.closed { background: #475569; }
+.badge.joined { background: var(--accent); }
+.t-body { padding: 14px; }
+.t-body h4 { margin: 0 0 4px; font-size: 17px; }
+.when { font-size: 13px; color: var(--muted); }
+.countdown {
+  margin: 10px 0; padding: 9px; border-radius: 12px; font-size: 14px;
+  background: var(--card2); text-align: center;
+}
+.countdown b { color: var(--accent2); font-size: 16px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+.stat { background: var(--card2); border-radius: 12px; padding: 9px 6px; text-align: center; }
+.stat small { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+.stat b { font-size: 15px; }
+.gold { color: var(--gold); }
+.pink { color: var(--pink); }
+.slots { margin: 10px 0 4px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+.bar { height: 6px; background: var(--card2); border-radius: 99px; overflow: hidden; margin-bottom: 12px; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg,#6d5efc,#22d3ee); }
+
+.row { display: flex; gap: 8px; }
+.btn {
+  flex: 1; width: 100%; padding: 13px; border: none; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(135deg, #6d5efc, #22d3ee);
+  color: #fff; font-size: 15px; font-weight: 700;
+}
+.btn.ghost { background: var(--card2); color: var(--text); border: 1px solid var(--line); }
+.btn.danger { background: var(--red); }
+.btn:disabled { background: var(--card2); color: var(--muted); cursor: not-allowed; }
+.btn.small { width: auto; padding: 10px 14px; font-size: 14px; }
+
+.seg { display: flex; background: var(--card); border-radius: 12px; padding: 4px; margin-bottom: 18px; }
+.seg button {
+  flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer;
+  background: transparent; color: var(--muted); font-weight: 600; font-size: 15px;
+}
+.seg button.on { background: var(--accent); color: #fff; }
+.field label { display: block; font-size: 14px; color: var(--muted); margin: 4px 0 6px; }
+.field input {
+  width: 100%; padding: 14px; margin-bottom: 14px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 16px;
+}
+.field input:focus { outline: none; border-color: var(--accent); }
+
+.match {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px; margin-bottom: 12px;
+}
+.match h4 { margin: 0 0 6px; font-size: 16px; }
+.cred {
+  margin-top: 10px; padding: 10px; border-radius: 12px; background: var(--card2);
+  font-size: 15px; line-height: 1.7;
+}
+.cred b { color: var(--accent2); }
+
+.wallet-card {
+  background: linear-gradient(135deg, #6d5efc, #22d3ee);
+  border-radius: 18px; padding: 22px; text-align: center; margin-bottom: 16px;
+}
+.wallet-card small { opacity: .9; }
+.wallet-card h2 { margin: 6px 0 0; font-size: 34px; }
+
+.profile { text-align: center; padding: 20px 0; }
+.avatar {
+  width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 50%;
+  background: linear-gradient(135deg, #6d5efc, #22d3ee);
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
+}
+.profile h3 { margin: 0 0 4px; font-size: 20px; }
+
+.bottom-nav {
+  position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 20;
+  display: flex; background: var(--card); border: 1px solid var(--line);
+  border-radius: 20px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+.nav-btn {
+  flex: 1; background: none; border: none; color: var(--muted); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 12px; padding: 8px 0; border-radius: 14px;
+}
+.nav-btn span { font-size: 19px; }
+.nav-btn.on { color: var(--text); background: rgba(109,94,252,.22); }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 40;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  width: 100%; max-width: 520px; background: var(--card); border-radius: 22px 22px 0 0;
+  padding: 20px; max-height: 80vh; overflow-y: auto;
+}
+.sheet h3 { margin: 0 0 12px; }
+.sheet p { margin: 6px 0; font-size: 15px; line-height: 1.6; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px);
+  background: var(--card2); border: 1px solid var(--line); padding: 12px 18px;
+  border-radius: 12px; font-size: 14px; opacity: 0; transition: .25s; z-index: 50;
+  max-width: 90%; text-align: center; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.empty { text-align: center; padding: 36px 0; color: var(--muted); }
 </style>
 </head>
 <body>
 
-<h2 id="title">FF Tournament</h2>
-<p id="welcome"></p>
+<header>
+  <div class="brand" id="brand">FF <span>Tournament</span></div>
+  <div class="wallet-chip hidden" id="walletChip">৳ 0</div>
+</header>
 
-<div id="authView">
-  <div id="regForm">
-    <input id="rName" placeholder="নাম">
-    <input id="rFF" placeholder="Free Fire ID">
-    <input id="rPhone" placeholder="ফোন নম্বর">
-    <input id="rPass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৪ অক্ষর)">
-    <button onclick="register()">রেজিস্ট্রেশন</button>
-    <button class="grey" onclick="showLogin()">লগইনে যান</button>
-  </div>
-  <div id="loginForm" class="hidden">
-    <input id="lPhone" placeholder="ফোন নম্বর">
-    <input id="lPass" type="password" placeholder="পাসওয়ার্ড">
-    <button onclick="login()">লগইন</button>
-    <button class="grey" onclick="showReg()">রেজিস্ট্রেশনে যান</button>
-  </div>
-  <div class="msg" id="authMsg"></div>
+<main>
+
+  <!-- লগইন / রেজিস্ট্রেশন -->
+  <section class="view" id="authView">
+    <div class="seg">
+      <button id="segLogin" class="on" onclick="showAuth('login')">লগইন</button>
+      <button id="segReg" onclick="showAuth('reg')">রেজিস্ট্রেশন</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="field"><label>ফোন নম্বর</label><input id="lPhone" inputmode="tel"></div>
+      <div class="field"><label>পাসওয়ার্ড</label><input id="lPass" type="password"></div>
+      <button class="btn" onclick="login()">লগইন করুন</button>
+    </div>
+
+    <div id="regForm" class="hidden">
+      <div class="field"><label>আপনার নাম</label><input id="rName"></div>
+      <div class="field"><label>Free Fire UID</label><input id="rFF" inputmode="numeric"></div>
+      <div class="field"><label>ফোন নম্বর</label><input id="rPhone" inputmode="tel"></div>
+      <div class="field"><label>পাসওয়ার্ড (কমপক্ষে ৪ অক্ষর)</label><input id="rPass" type="password"></div>
+      <div class="field"><label>পাসওয়ার্ড আবার লিখুন</label><input id="rPass2" type="password"></div>
+      <button class="btn" onclick="register()">অ্যাকাউন্ট খুলুন</button>
+    </div>
+    <div class="msg" id="authMsg"></div>
+  </section>
+
+  <!-- হোম -->
+  <section class="view" id="homeView">
+    <div class="hero">
+      <h2 id="welcome">স্বাগতম</h2>
+      <p id="sub">টুর্নামেন্টে জয়েন করুন এবং প্রাইজ জিতুন</p>
+    </div>
+    <div class="cats" id="cats"></div>
+    <div id="list"></div>
+  </section>
+
+  <!-- আমার ম্যাচ -->
+  <section class="view" id="matchesView">
+    <h3 style="margin-top:0">আমার ম্যাচ</h3>
+    <button class="btn ghost small" onclick="loadMyMatches()" style="margin-bottom:12px">রিফ্রেশ</button>
+    <div id="myMatches"></div>
+  </section>
+
+  <!-- ওয়ালেট -->
+  <section class="view" id="walletView">
+    <div class="wallet-card">
+      <small>বর্তমান ব্যালেন্স</small>
+      <h2 id="walletBal">৳ 0</h2>
+    </div>
+    <p class="muted" style="text-align:center">ডিপোজিট ও উইথড্রয়াল শিগগিরই যোগ হচ্ছে। এখন শুধু ব্যালেন্স দেখানো হচ্ছে।</p>
+    <button class="btn ghost" onclick="loadWallet()">ব্যালেন্স রিফ্রেশ</button>
+  </section>
+
+  <!-- প্রোফাইল -->
+  <section class="view" id="profileView">
+    <div class="profile">
+      <div class="avatar">🎮</div>
+      <h3 id="pName"></h3>
+      <p class="muted">FF Tournament খেলোয়াড়</p>
+    </div>
+    <button class="btn danger" onclick="logout()">লগআউট</button>
+  </section>
+
+</main>
+
+<nav class="bottom-nav" id="nav">
+  <button class="nav-btn on" data-v="home" onclick="go('home')"><span>🏠</span>হোম</button>
+  <button class="nav-btn" data-v="matches" onclick="go('matches')"><span>🎯</span>আমার ম্যাচ</button>
+  <button class="nav-btn" data-v="wallet" onclick="go('wallet')"><span>💰</span>ওয়ালেট</button>
+  <button class="nav-btn" data-v="profile" onclick="go('profile')"><span>👤</span>প্রোফাইল</button>
+</nav>
+
+<div class="modal hidden" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet" id="sheet"></div>
 </div>
 
-<div id="mainView" class="hidden">
-  <button class="grey" onclick="logout()">লগআউট</button>
-  <h3>টুর্নামেন্ট</h3>
-  <button class="grey" onclick="loadTournaments()">রিফ্রেশ</button>
-  <div id="tournamentList"></div>
-  <div class="msg" id="mainMsg"></div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
 const API = 'https://production-o2k8.onrender.com';
-let token = localStorage.getItem('token') || '';
-
 const $ = id => document.getElementById(id);
+
+let token = localStorage.getItem('token') || '';
+let userName = localStorage.getItem('userName') || '';
+let categories = [];
+let activeCat = '';
+let tournaments = [];
+
+const COLORS = [['#6d5efc','#22d3ee'], ['#f97316','#ef4444'], ['#10b981','#3b82f6'], ['#ec4899','#8b5cf6'], ['#eab308','#f97316']];
+const ICONS = ['🔫', '💥', '🎯', '⚔️', '🏆'];
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// নেটওয়ার্ক ব্যর্থ হলে (Render ঘুম থেকে উঠলে) কয়েকবার চেষ্টা করে
+function toast(m) {
+  const el = $('toast');
+  el.textContent = m;
+  el.classList.add('show');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// Render ঘুম থেকে উঠলে কয়েকবার চেষ্টা করে
 async function api(path, opts = {}, tries = 3) {
   for (let i = 1; i <= tries; i++) {
     try {
       const res = await fetch(API + path, {
-        cache: 'no-store',
-        ...opts,
+        cache: 'no-store', ...opts,
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: 'Bearer ' + token } : {}),
@@ -76,7 +302,7 @@ async function api(path, opts = {}, tries = 3) {
       return data;
     } catch (e) {
       if (e instanceof TypeError) {
-        if (i < tries) { await new Promise(r => setTimeout(r, 8000)); continue; }
+        if (i < tries) { await new Promise(r => setTimeout(r, 6000)); continue; }
         throw new Error('সার্ভারে পৌঁছানো যাচ্ছে না। ১ মিনিট পর আবার চেষ্টা করুন।');
       }
       throw e;
@@ -84,32 +310,84 @@ async function api(path, opts = {}, tries = 3) {
   }
 }
 
-function showLogin() {
-  $('regForm').classList.add('hidden');
-  $('loginForm').classList.remove('hidden');
+function isAuthErr(e) { return /অনুমতি|মেয়াদ|ব্যান/.test(e.message); }
+
+// ---------- সময় ----------
+// ডেটাবেসের সময় যেমন লেখা হয়েছে তেমনই দেখাই
+function cleanTime(s) {
+  return s ? String(s).replace('Z', '').replace('T', ' ').slice(0, 16) : '';
+}
+function localDate(clean) {
+  const [d, t] = clean.split(' ');
+  const [y, m, dd] = d.split('-').map(Number);
+  const [hh, mm] = t.split(':').map(Number);
+  return new Date(y, m - 1, dd, hh, mm);
+}
+function fmtLeft(ms) {
+  if (ms <= 0) return 'শুরু হয়েছে';
+  const s = Math.floor(ms / 1000);
+  const h = String(Math.floor(s / 3600)).padStart(2, '0');
+  const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+  const sec = String(s % 60).padStart(2, '0');
+  return `${h}ঘ ${m}মি ${sec}সে`;
+}
+setInterval(() => {
+  document.querySelectorAll('[data-start]').forEach(el => {
+    el.textContent = fmtLeft(localDate(el.dataset.start) - Date.now());
+  });
+}, 1000);
+
+// ---------- নেভিগেশন ----------
+
+function go(v) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('on'));
+  if (!token) { $('authView').classList.add('on'); return; }
+  $(v + 'View').classList.add('on');
+  if (v === 'home') loadTournaments();
+  if (v === 'matches') loadMyMatches();
+  if (v === 'wallet') loadWallet();
+  if (v === 'profile') $('pName').textContent = userName || 'খেলোয়াড়';
+}
+
+function showAuth(which) {
+  const login = which === 'login';
+  $('loginForm').classList.toggle('hidden', !login);
+  $('regForm').classList.toggle('hidden', login);
+  $('segLogin').classList.toggle('on', login);
+  $('segReg').classList.toggle('on', !login);
   $('authMsg').textContent = '';
 }
 
-function showReg() {
-  $('loginForm').classList.add('hidden');
-  $('regForm').classList.remove('hidden');
-  $('authMsg').textContent = '';
+function logout(msg = '') {
+  token = ''; userName = '';
+  localStorage.removeItem('token');
+  localStorage.removeItem('userName');
+  $('nav').classList.add('hidden');
+  $('walletChip').classList.add('hidden');
+  go('home');
+  showAuth('login');
+  $('authMsg').textContent = msg;
 }
+
+// ---------- অ্যাকাউন্ট ----------
 
 async function register() {
-  $('authMsg').textContent = 'রেজিস্ট্রেশন হচ্ছে...';
+  if ($('rPass').value !== $('rPass2').value) {
+    $('authMsg').textContent = 'দুটো পাসওয়ার্ড মিলছে না';
+    return;
+  }
+  $('authMsg').textContent = 'অ্যাকাউন্ট খোলা হচ্ছে...';
   try {
     await api('/api/register', {
       method: 'POST',
       body: JSON.stringify({
-        name: $('rName').value,
-        ff_id: $('rFF').value,
-        phone: $('rPhone').value,
-        password: $('rPass').value,
+        name: $('rName').value, ff_id: $('rFF').value,
+        phone: $('rPhone').value, password: $('rPass').value,
       }),
     });
-    $('authMsg').textContent = 'রেজিস্ট্রেশন সফল, এখন লগইন করুন';
-    showLogin();
+    showAuth('login');
+    $('authMsg').textContent = 'অ্যাকাউন্ট তৈরি হয়েছে, এখন লগইন করুন';
   } catch (e) { $('authMsg').textContent = e.message; }
 }
 
@@ -121,66 +399,203 @@ async function login() {
       body: JSON.stringify({ phone: $('lPhone').value, password: $('lPass').value }),
     });
     token = data.token;
+    userName = data.user.name;
     localStorage.setItem('token', token);
+    localStorage.setItem('userName', userName);
     $('authMsg').textContent = '';
-    showMain();
+    afterLogin();
+    toast('স্বাগতম, ' + userName + '!');
   } catch (e) { $('authMsg').textContent = e.message; }
 }
 
-function logout() {
-  token = '';
-  localStorage.removeItem('token');
-  location.reload();
+function afterLogin() {
+  $('nav').classList.remove('hidden');
+  $('walletChip').classList.remove('hidden');
+  loadWallet();
+  go('home');
 }
+
+// ---------- সেটিংস ও ক্যাটাগরি ----------
 
 async function loadSettings() {
   try {
     const s = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json());
-    if (s.app_title) $('title').textContent = s.app_title;
-    if (s.welcome_text) $('welcome').textContent = s.welcome_text;
+    if (s.app_title) $('brand').innerHTML = esc(s.app_title);
+    if (s.welcome_text) $('sub').textContent = s.welcome_text;
   } catch {}
 }
 
-function showMain() {
-  $('authView').classList.add('hidden');
-  $('mainView').classList.remove('hidden');
-  loadSettings();
+async function loadCategories() {
+  try {
+    categories = await fetch(API + '/api/categories', { cache: 'no-store' }).then(r => r.json());
+    $('cats').innerHTML = [{ slug: '', name: 'সব' }, ...categories]
+      .map(c => `<button class="cat ${c.slug === activeCat ? 'on' : ''}"
+                   onclick="setCat('${esc(c.slug)}')">${esc(c.name)}</button>`).join('');
+  } catch {}
+}
+
+function setCat(slug) {
+  activeCat = slug;
+  loadCategories();
   loadTournaments();
 }
 
-async function loadTournaments() {
-  $('mainMsg').textContent = 'টুর্নামেন্ট লোড হচ্ছে...';
+// ---------- ওয়ালেট ----------
+
+async function loadWallet() {
+  if (!token) return;
   try {
-    const items = await api('/api/tournaments');
-    $('tournamentList').innerHTML = items.map(t => `
-      <div class="card">
-        <b>${esc(t.name)}</b><br>
-        এন্ট্রি ফি: ${esc(t.entry_fee)} টাকা<br>
-        প্রাইজ: ${esc(t.prize || '-')}<br>
-        ${t.status === 'open'
-          ? `<button onclick="join(${Number(t.id)})">জয়েন করুন</button>`
-          : `<span>জয়েন বন্ধ</span>`}
-      </div>`).join('') || '<p>এখন কোনো টুর্নামেন্ট নেই</p>';
-    $('mainMsg').textContent = '';
+    const w = await api('/api/wallet');
+    $('walletBal').textContent = '৳ ' + w.balance;
+    $('walletChip').textContent = '৳ ' + w.balance;
   } catch (e) {
-    $('mainMsg').textContent = e.message;
-    if (e.message.includes('ব্যান') || e.message.includes('মেয়াদ') || e.message.includes('অনুমতি')) {
-      logout();
-    }
+    if (isAuthErr(e)) logout(e.message);
   }
 }
 
+// ---------- টুর্নামেন্ট ----------
+
+async function loadTournaments() {
+  $('list').innerHTML = '<p class="muted" style="text-align:center">লোড হচ্ছে...</p>';
+  try {
+    const q = activeCat ? '?category=' + encodeURIComponent(activeCat) : '';
+    tournaments = await api('/api/tournaments' + q);
+    renderList();
+  } catch (e) {
+    $('list').innerHTML = `<p class="err" style="text-align:center">${esc(e.message)}</p>
+      <div style="text-align:center"><button class="btn small" onclick="loadTournaments()">আবার চেষ্টা করুন</button></div>`;
+    if (isAuthErr(e)) logout(e.message);
+  }
+}
+
+function renderList() {
+  $('list').innerHTML = tournaments.map(card).join('') ||
+    '<div class="empty">এই ক্যাটাগরিতে এখন কোনো টুর্নামেন্ট নেই</div>';
+}
+
+function statusOf(t) {
+  if (t.is_joined) return ['joined', 'জয়েন করা'];
+  if (t.status === 'closed') return ['closed', 'বন্ধ'];
+  if (t.available <= 0) return ['full', 'ফুল'];
+  return ['up', 'আপকামিং'];
+}
+
+function card(t) {
+  const id = Number(t.id);
+  const [c1, c2] = COLORS[id % COLORS.length];
+  const icon = ICONS[id % ICONS.length];
+  const [cls, label] = statusOf(t);
+  const clean = cleanTime(t.starts_at);
+  const when = clean
+    ? localDate(clean).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' })
+    : 'সময় ঘোষণা হবে';
+  const bg = t.image_url
+    ? `background-image:url('${esc(t.image_url)}')`
+    : `background:linear-gradient(135deg,${c1},${c2})`;
+  const pct = t.max_slots ? Math.min(100, Math.round((t.joined / t.max_slots) * 100)) : 0;
+  const canJoin = cls === 'up';
+
+  return `
+    <div class="t-card">
+      <div class="t-banner" style="${bg}">
+        ${t.image_url ? '' : `<span>${icon}</span>`}
+        <span class="badge ${cls}">${label}</span>
+      </div>
+      <div class="t-body">
+        <h4>${esc(t.name)}</h4>
+        <div class="when">${esc(t.category_name || '')} · ${esc(t.match_type || '')} · 📅 ${esc(when)}</div>
+        ${clean ? `<div class="countdown">শুরু হতে বাকি: <b data-start="${esc(clean)}"></b></div>` : ''}
+        <div class="stats">
+          <div class="stat"><small>প্রাইজ পুল</small><b class="gold">${esc(t.prize || '-')}</b></div>
+          <div class="stat"><small>প্রতি কিল</small><b class="gold">৳ ${Number(t.per_kill) || 0}</b></div>
+          <div class="stat"><small>এন্ট্রি ফি</small><b class="pink">৳ ${Number(t.entry_fee) || 0}</b></div>
+        </div>
+        <div class="when">🗺️ ${esc(t.map_name || '-')}</div>
+        <div class="slots"><span>জয়েন: ${Number(t.joined)}/${Number(t.max_slots)}</span>
+          <span>বাকি স্লট: ${Number(t.available)}</span></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="row">
+          <button class="btn ghost" onclick="showPrize(${id})">প্রাইজ বিস্তারিত</button>
+          ${t.is_joined
+            ? `<button class="btn ghost" disabled>জয়েন হয়েছে</button>`
+            : `<button class="btn" ${canJoin ? `onclick="join(${id})"` : 'disabled'}>জয়েন করুন</button>`}
+        </div>
+      </div>
+    </div>`;
+}
+
+function showPrize(id) {
+  const t = tournaments.find(x => Number(x.id) === Number(id));
+  if (!t) return;
+  $('sheet').innerHTML = `
+    <h3>${esc(t.name)}</h3>
+    <p>🏆 <b>প্রাইজ পুল:</b> ${esc(t.prize || '-')}</p>
+    <p>🎯 <b>প্রতি কিল:</b> ৳ ${Number(t.per_kill) || 0}</p>
+    <p>💳 <b>এন্ট্রি ফি:</b> ৳ ${Number(t.entry_fee) || 0}</p>
+    <p>🗺️ <b>ম্যাপ:</b> ${esc(t.map_name || '-')}</p>
+    <p>👥 <b>স্লট:</b> ${Number(t.joined)}/${Number(t.max_slots)}</p>
+    <div style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">বন্ধ করুন</button></div>`;
+  $('modal').classList.remove('hidden');
+}
+
+function closeModal() { $('modal').classList.add('hidden'); }
+
 async function join(id) {
-  $('mainMsg').textContent = 'জয়েন হচ্ছে...';
+  const t = tournaments.find(x => Number(x.id) === Number(id));
+  const fee = t ? Number(t.entry_fee) || 0 : 0;
+  if (!confirm(`এই টুর্নামেন্টে জয়েন করবেন?${fee ? `\nএন্ট্রি ফি ৳${fee} ওয়ালেট থেকে কাটা হবে।` : ''}`)) return;
+  toast('জয়েন হচ্ছে...');
   try {
     await api(`/api/tournaments/${id}/join`, { method: 'POST' });
-    $('mainMsg').textContent = 'জয়েন সফল!';
-  } catch (e) { $('mainMsg').textContent = e.message; }
+    toast('জয়েন সফল! 🎉');
+    loadWallet();
+    loadTournaments();
+  } catch (e) {
+    toast(e.message);
+    if (isAuthErr(e)) logout(e.message);
+  }
+}
+
+// ---------- আমার ম্যাচ ----------
+
+async function loadMyMatches() {
+  $('myMatches').innerHTML = '<p class="muted" style="text-align:center">লোড হচ্ছে...</p>';
+  try {
+    const list = await api('/api/my-matches');
+    $('myMatches').innerHTML = list.map(m => {
+      const clean = cleanTime(m.starts_at);
+      const when = clean ? localDate(clean).toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' }) : 'সময় ঘোষণা হবে';
+      const room = m.room_id
+        ? `<div class="cred">🔑 রুম আইডি: <b>${esc(m.room_id)}</b><br>🔒 পাসওয়ার্ড: <b>${esc(m.room_password || '-')}</b></div>`
+        : `<div class="cred muted">রুম আইডি এখনো প্রকাশ হয়নি। অ্যাডমিন প্রকাশ করলে এখানে দেখা যাবে।</div>`;
+      return `
+        <div class="match">
+          <h4>${esc(m.name)}</h4>
+          <div class="when">${esc(m.category_name || '')} · 🗺️ ${esc(m.map_name || '-')} · 📅 ${esc(when)}</div>
+          <div class="when">স্ট্যাটাস: ${esc(m.status === 'open' ? 'আপকামিং' : m.status)} · প্রাইজ: ${esc(m.prize || '-')}</div>
+          ${room}
+        </div>`;
+    }).join('') || '<div class="empty">আপনি এখনো কোনো ম্যাচে জয়েন করেননি</div>';
+  } catch (e) {
+    $('myMatches').innerHTML = `<p class="err" style="text-align:center">${esc(e.message)}</p>`;
+    if (isAuthErr(e)) logout(e.message);
+  }
 }
 
 // ---------- শুরু ----------
 
-if (token) showMain();
+fetch(API + '/api/health', { cache: 'no-store' }).catch(() => {});
+loadSettings();
+loadCategories();
+if (token) {
+  $('nav').classList.remove('hidden');
+  $('walletChip').classList.remove('hidden');
+  go('home');
+  loadWallet();
+} else {
+  $('nav').classList.add('hidden');
+  go('home');
+}
 </script>
 </body>
-</html>
+  </html>
