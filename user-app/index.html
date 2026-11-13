@@ -10,9 +10,10 @@
   body { font-family: sans-serif; background: #111827; color: #f9fafb; margin: 0; padding: 16px; }
   input, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
   button { background: #2563eb; color: white; }
+  button.grey { background: #374151; }
   .card { background: #1f2937; padding: 14px; border-radius: 10px; margin: 10px 0; }
   .hidden { display: none; }
-  .msg { color: #fbbf24; min-height: 20px; }
+  .msg { color: #fbbf24; min-height: 22px; margin: 6px 0; }
 </style>
 </head>
 <body>
@@ -25,81 +26,105 @@
     <input id="rName" placeholder="নাম">
     <input id="rFF" placeholder="Free Fire ID">
     <input id="rPhone" placeholder="ফোন নম্বর">
-    <input id="rPass" type="password" placeholder="পাসওয়ার্ড">
+    <input id="rPass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৪ অক্ষর)">
     <button onclick="register()">রেজিস্ট্রেশন</button>
-    <button onclick="showLogin()" style="background:#374151">লগইনে যান</button>
+    <button class="grey" onclick="showLogin()">লগইনে যান</button>
   </div>
   <div id="loginForm" class="hidden">
     <input id="lPhone" placeholder="ফোন নম্বর">
     <input id="lPass" type="password" placeholder="পাসওয়ার্ড">
     <button onclick="login()">লগইন</button>
-    <button onclick="showReg()" style="background:#374151">রেজিস্ট্রেশনে যান</button>
+    <button class="grey" onclick="showReg()">রেজিস্ট্রেশনে যান</button>
   </div>
   <div class="msg" id="authMsg"></div>
 </div>
 
 <div id="mainView" class="hidden">
-  <button onclick="logout()" style="background:#374151">লগআউট</button>
+  <button class="grey" onclick="logout()">লগআউট</button>
   <h3>টুর্নামেন্ট</h3>
+  <button class="grey" onclick="loadTournaments()">রিফ্রেশ</button>
   <div id="tournamentList"></div>
   <div class="msg" id="mainMsg"></div>
 </div>
 
 <script>
 const API = 'https://production-o2k8.onrender.com';
-
 let token = localStorage.getItem('token') || '';
 
-async function api(path, options = {}) {
-  const res = await fetch(API + path, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...(options.headers || {}),
-    },
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'সমস্যা হয়েছে');
-  return data;
+const $ = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// নেটওয়ার্ক ব্যর্থ হলে (Render ঘুম থেকে উঠলে) কয়েকবার চেষ্টা করে
+async function api(path, opts = {}, tries = 3) {
+  for (let i = 1; i <= tries; i++) {
+    try {
+      const res = await fetch(API + path, {
+        cache: 'no-store',
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
+          ...(opts.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'সমস্যা হয়েছে (' + res.status + ')');
+      return data;
+    } catch (e) {
+      if (e instanceof TypeError) {
+        if (i < tries) { await new Promise(r => setTimeout(r, 8000)); continue; }
+        throw new Error('সার্ভারে পৌঁছানো যাচ্ছে না। ১ মিনিট পর আবার চেষ্টা করুন।');
+      }
+      throw e;
+    }
+  }
 }
 
 function showLogin() {
-  document.getElementById('regForm').classList.add('hidden');
-  document.getElementById('loginForm').classList.remove('hidden');
+  $('regForm').classList.add('hidden');
+  $('loginForm').classList.remove('hidden');
+  $('authMsg').textContent = '';
 }
+
 function showReg() {
-  document.getElementById('loginForm').classList.add('hidden');
-  document.getElementById('regForm').classList.remove('hidden');
+  $('loginForm').classList.add('hidden');
+  $('regForm').classList.remove('hidden');
+  $('authMsg').textContent = '';
 }
 
 async function register() {
-  const msg = document.getElementById('authMsg');
+  $('authMsg').textContent = 'রেজিস্ট্রেশন হচ্ছে...';
   try {
     await api('/api/register', {
       method: 'POST',
       body: JSON.stringify({
-        name: rName.value, ff_id: rFF.value,
-        phone: rPhone.value, password: rPass.value,
+        name: $('rName').value,
+        ff_id: $('rFF').value,
+        phone: $('rPhone').value,
+        password: $('rPass').value,
       }),
     });
-    msg.textContent = 'রেজিস্ট্রেশন সফল, এখন লগইন করুন';
+    $('authMsg').textContent = 'রেজিস্ট্রেশন সফল, এখন লগইন করুন';
     showLogin();
-  } catch (e) { msg.textContent = e.message; }
+  } catch (e) { $('authMsg').textContent = e.message; }
 }
 
 async function login() {
-  const msg = document.getElementById('authMsg');
+  $('authMsg').textContent = 'লগইন হচ্ছে...';
   try {
     const data = await api('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ phone: lPhone.value, password: lPass.value }),
+      body: JSON.stringify({ phone: $('lPhone').value, password: $('lPass').value }),
     });
     token = data.token;
     localStorage.setItem('token', token);
-    msg.textContent = '';
+    $('authMsg').textContent = '';
     showMain();
-  } catch (e) { msg.textContent = e.message; }
+  } catch (e) { $('authMsg').textContent = e.message; }
 }
 
 function logout() {
@@ -110,48 +135,50 @@ function logout() {
 
 async function loadSettings() {
   try {
-    const s = await fetch(API + '/api/settings').then(r => r.json());
-    if (s.app_title) document.getElementById('title').textContent = s.app_title;
-    if (s.welcome_text) document.getElementById('welcome').textContent = s.welcome_text;
+    const s = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json());
+    if (s.app_title) $('title').textContent = s.app_title;
+    if (s.welcome_text) $('welcome').textContent = s.welcome_text;
   } catch {}
 }
 
-async function showMain() {
-  document.getElementById('authView').classList.add('hidden');
-  document.getElementById('mainView').classList.remove('hidden');
+function showMain() {
+  $('authView').classList.add('hidden');
+  $('mainView').classList.remove('hidden');
   loadSettings();
   loadTournaments();
 }
 
 async function loadTournaments() {
-  const list = document.getElementById('tournamentList');
-  const msg = document.getElementById('mainMsg');
+  $('mainMsg').textContent = 'টুর্নামেন্ট লোড হচ্ছে...';
   try {
     const items = await api('/api/tournaments');
-    list.innerHTML = '';
-    items.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `
-        <b>${t.name}</b><br>
-        এন্ট্রি ফি: ${t.entry_fee} টাকা<br>
-        প্রাইজ: ${t.prize || '-'}<br>
-        <button onclick="join(${t.id})">জয়েন করুন</button>`;
-      list.appendChild(div);
-    });
+    $('tournamentList').innerHTML = items.map(t => `
+      <div class="card">
+        <b>${esc(t.name)}</b><br>
+        এন্ট্রি ফি: ${esc(t.entry_fee)} টাকা<br>
+        প্রাইজ: ${esc(t.prize || '-')}<br>
+        ${t.status === 'open'
+          ? `<button onclick="join(${Number(t.id)})">জয়েন করুন</button>`
+          : `<span>জয়েন বন্ধ</span>`}
+      </div>`).join('') || '<p>এখন কোনো টুর্নামেন্ট নেই</p>';
+    $('mainMsg').textContent = '';
   } catch (e) {
-    msg.textContent = e.message;
-    if (e.message.includes('ব্যান')) logout();
+    $('mainMsg').textContent = e.message;
+    if (e.message.includes('ব্যান') || e.message.includes('মেয়াদ') || e.message.includes('অনুমতি')) {
+      logout();
+    }
   }
 }
 
 async function join(id) {
-  const msg = document.getElementById('mainMsg');
+  $('mainMsg').textContent = 'জয়েন হচ্ছে...';
   try {
     await api(`/api/tournaments/${id}/join`, { method: 'POST' });
-    msg.textContent = 'জয়েন সফল!';
-  } catch (e) { msg.textContent = e.message; }
+    $('mainMsg').textContent = 'জয়েন সফল!';
+  } catch (e) { $('mainMsg').textContent = e.message; }
 }
+
+// ---------- শুরু ----------
 
 if (token) showMain();
 </script>
