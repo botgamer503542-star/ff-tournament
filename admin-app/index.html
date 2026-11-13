@@ -53,7 +53,7 @@ label { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
   box-shadow: 0 12px 30px rgba(109,94,252,.35);
 }
 .login-box h1 { margin: 0 0 4px; font-size: 22px; }
-.login-box .card { margin-top: 22px; text-align: left; }
+.login-card { margin-top: 22px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
 
 /* হেডার */
 header {
@@ -82,7 +82,6 @@ main { padding: 16px; }
 .stat.alert { border-color: var(--amber); box-shadow: 0 0 0 1px rgba(245,158,11,.35) inset; }
 .quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 h3 { margin: 22px 0 10px; font-size: 16px; }
-
 .notice { margin-top: 16px; padding: 12px; border-radius: 12px; background: #3b2a06; color: #fde68a; font-size: 14px; }
 
 /* ফিল্টার চিপ */
@@ -92,11 +91,7 @@ h3 { margin: 22px 0 10px; font-size: 16px; }
 .chip.on { background: linear-gradient(135deg,#6d5efc,#22d3ee); color: #fff; border: none; }
 
 /* আইটেম কার্ড */
-.item {
-  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-  padding: 14px; margin-bottom: 12px; animation: rise .3s ease both;
-}
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.item { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
 .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .item-top b { font-size: 15px; }
 .amount { font-size: 18px; font-weight: 800; color: var(--gold); white-space: nowrap; }
@@ -114,10 +109,7 @@ h3 { margin: 22px 0 10px; font-size: 16px; }
 .pill.banned { background: var(--red); color: #fff; }
 
 /* ইউজার */
-.avatar {
-  width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto;
-  background: linear-gradient(135deg,#6d5efc,#22d3ee); display: flex; align-items: center; justify-content: center; font-weight: 800;
-}
+.avatar { width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; background: linear-gradient(135deg,#6d5efc,#22d3ee); display: flex; align-items: center; justify-content: center; font-weight: 800; }
 .user-row { display: flex; gap: 12px; align-items: center; }
 .user-row .info { flex: 1; min-width: 0; }
 .user-row .info b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -190,9 +182,9 @@ h3 { margin: 22px 0 10px; font-size: 16px; }
 <div id="login" class="hidden">
   <div class="login-box">
     <div class="logo">🛡️</div>
-    <h1>FF Tournament Admin</h1>
+    <h1>FF Admin</h1>
     <p class="muted">শুধু অনুমোদিত অ্যাডমিন প্রবেশ করতে পারবেন</p>
-    <div class="card" style="background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px">
+    <div class="login-card">
       <div class="muted" id="serverMsg" style="margin-bottom:10px;min-height:18px"></div>
       <label>অ্যাডমিন পাসওয়ার্ড</label>
       <input id="adminPass" type="password" placeholder="পাসওয়ার্ড লিখুন">
@@ -251,12 +243,12 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-// ডেটাবেসের সময় যেমন আছে তেমনই দেখাই (সময় পরিবর্তন হয় না)
 function fmt(s) { return s ? String(s).replace('T', ' ').replace('Z', '').slice(0, 16) : '-'; }
 function money(n) { return '৳' + (Number(n) || 0).toLocaleString('en-US'); }
 function empty(icon, text) { return `<div class="empty"><div class="big">${icon}</div>${esc(text)}</div>`; }
 function errBox(text) { return `<div class="err-box">${esc(text)}</div>`; }
 function loader() { return '<div class="loader"></div>'; }
+function isAuthErr(msg) { return /অনুমতি|মেয়াদ/.test(msg); }
 
 function toast(msg, type = 'info') {
   const el = document.createElement('div');
@@ -269,7 +261,7 @@ function toast(msg, type = 'info') {
 
 function fail(e) {
   toast(e.message, 'error');
-  if (/অনুমতি|মেয়াদ/.test(e.message)) logout();
+  if (isAuthErr(e.message)) logout();
 }
 
 async function api(path, opts = {}, tries = 2) {
@@ -318,7 +310,7 @@ function confirmBox(msg, onYes, yesText = 'হ্যাঁ, নিশ্চি�
   $('yesBtn').onclick = () => { closeModal(); onYes(); };
 }
 
-// ---------- কাজের হ্যান্ডলার (ডেলিগেশন) ----------
+// ---------- ক্লিক হ্যান্ডলার ----------
 
 const A = {
   close: () => closeModal(),
@@ -327,4 +319,497 @@ const A = {
   logout: () => confirmBox('লগআউট করবেন?', logout, 'লগআউট', true),
   settings: () => openSettings(),
   'dep-filter': s => { S.depStatus = s; renderDeposits(); },
-  'wit-filter': s => { S.witStatus = s; renderWithdr
+  'wit-filter': s => { S.witStatus = s; renderWithdrawals(); },
+  'dep-approve': id => confirmBox(
+    'আপনি কি নিজের bKash/Nagad/Rocket-এ এই টাকা পেয়েছেন? অনুমোদন করলে ইউজারের ব্যালেন্স বাড়বে।',
+    async () => {
+      try { await api(`/api/admin/deposits/${id}/approve`, { method: 'POST' }); toast('অনুমোদন হয়েছে, ব্যালেন্স যোগ হয়েছে', 'success'); renderDeposits(); }
+      catch (e) { fail(e); }
+    }, 'অনুমোদন করুন'),
+  'dep-reject': id => confirmBox('এই ডিপোজিট অনুরোধ বাতিল করবেন?', async () => {
+    try { await api(`/api/admin/deposits/${id}/reject`, { method: 'POST' }); toast('বাতিল করা হয়েছে', 'success'); renderDeposits(); }
+    catch (e) { fail(e); }
+  }, 'বাতিল করুন', true),
+  'wit-paid': id => confirmBox('আপনি কি এই নম্বরে টাকা পাঠিয়ে দিয়েছেন?', async () => {
+    try { await api(`/api/admin/withdrawals/${id}/paid`, { method: 'POST' }); toast('পরিশোধিত হিসেবে চিহ্নিত', 'success'); renderWithdrawals(); }
+    catch (e) { fail(e); }
+  }, 'পাঠানো হয়েছে'),
+  'wit-reject': id => confirmBox('বাতিল করলে টাকা ইউজারের ব্যালেন্সে ফেরত যাবে। নিশ্চিত?', async () => {
+    try { await api(`/api/admin/withdrawals/${id}/reject`, { method: 'POST' }); toast('বাতিল হয়েছে, টাকা ফেরত দেওয়া হয়েছে', 'success'); renderWithdrawals(); }
+    catch (e) { fail(e); }
+  }, 'বাতিল ও ফেরত', true),
+  'user-bal': (id, _, btn) => openBalance(id, Number(btn.dataset.sign)),
+  'bal-save': (id, _, btn) => saveBalance(id, Number(btn.dataset.sign)),
+  'user-ban': id => confirmBox('এই ইউজারকে ব্যান করবেন? সে আর লগইন ও জয়েন করতে পারবে না।', async () => {
+    try { await api(`/api/admin/ban/${id}`, { method: 'POST' }); toast('ব্যান করা হয়েছে', 'success'); renderUsers(); }
+    catch (e) { fail(e); }
+  }, 'ব্যান করুন', true),
+  'user-unban': id => confirmBox('এই ইউজারের ব্যান তুলবেন?', async () => {
+    try { await api(`/api/admin/unban/${id}`, { method: 'POST' }); toast('ব্যান তোলা হয়েছে', 'success'); renderUsers(); }
+    catch (e) { fail(e); }
+  }, 'ব্যান তুলুন'),
+  't-new': () => openTourForm(null),
+  't-edit': id => openTourForm(id),
+  't-save': id => saveTour(id),
+  't-room': id => openRoom(id),
+  'room-save': (id, _, btn) => saveRoom(id, btn.dataset.release === '1'),
+  't-del': id => confirmBox('এই টুর্নামেন্ট মুছে ফেলবেন? জয়েন করা ইউজারদের তথ্যও যাবে।', async () => {
+    try { await api(`/api/admin/tournaments/${id}`, { method: 'DELETE' }); toast('মুছে ফেলা হয়েছে', 'success'); renderTours(); }
+    catch (e) { fail(e); }
+  }, 'মুছে ফেলুন', true),
+  'settings-save': () => saveSettings(),
+};
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || b.disabled) return;
+  const fn = A[b.dataset.act];
+  if (fn) fn(b.dataset.id, null, b);
+});
+
+// ---------- নেভিগেশন ও ভিউ ----------
+
+function setView(v) {
+  S.view = v;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.id === v));
+  renderView();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderView() {
+  if (S.view === 'dash') return renderDash();
+  if (S.view === 'deposits') return renderDeposits();
+  if (S.view === 'withdrawals') return renderWithdrawals();
+  if (S.view === 'users') return renderUsers();
+  if (S.view === 'tournaments') return renderTours();
+}
+
+function pageHead(title, sub, extra = '') {
+  return `<div class="page-head"><div><h2>${esc(title)}</h2><p class="muted">${esc(sub)}</p></div>${extra}</div>`;
+}
+
+function chip(val, label, cur, act) {
+  return `<button class="chip ${val === cur ? 'on' : ''}" data-act="${act}" data-id="${val}">${label}</button>`;
+}
+
+// ---------- ড্যাশবোর্ড ----------
+
+function stat(label, value, icon, target, alert = false) {
+  return `<button class="stat ${alert ? 'alert' : ''}" data-act="go" data-id="${target}">
+    <div class="ic">${icon}</div><div class="num">${value}</div><div class="lbl">${esc(label)}</div></button>`;
+}
+
+async function renderDash() {
+  $('view').innerHTML = pageHead('ড্যাশবোর্ড', 'আজকের কাজের সারসংক্ষেপ', '<button data-act="refresh">রিফ্রেশ</button>') + loader();
+  const [u, d, w, t, c] = await Promise.allSettled([
+    api('/api/admin/users'),
+    api('/api/admin/deposits?status=pending'),
+    api('/api/admin/withdrawals?status=pending'),
+    api('/api/admin/tournaments'),
+    api('/api/admin/categories'),
+  ]);
+  const get = r => (r.status === 'fulfilled' ? r.value : null);
+  const users = get(u), dep = get(d), wit = get(w), tours = get(t), cats = get(c);
+  if (users) S.users = users;
+  if (tours) S.tours = tours;
+  if (cats) S.cats = cats;
+
+  const failed = [u, d, w, t].find(r => r.status === 'rejected');
+  if (failed && isAuthErr(failed.reason.message)) return logout();
+
+  $('view').innerHTML = pageHead('ড্যাশবোর্ড', 'আজকের কাজের সারসংক্ষেপ', '<button data-act="refresh">রিফ্রেশ</button>') + `
+    <div class="stats">
+      ${stat('মোট ইউজার', users ? users.length : '-', '👥', 'users')}
+      ${stat('অপেক্ষমাণ ডিপোজিট', dep ? dep.length : '-', '💳', 'deposits', dep && dep.length > 0)}
+      ${stat('অপেক্ষমাণ উইথড্রয়াল', wit ? wit.length : '-', '🏦', 'withdrawals', wit && wit.length > 0)}
+      ${stat('সক্রিয় টুর্নামেন্ট', tours ? tours.filter(x => x.status === 'open').length : '-', '🏆', 'tournaments')}
+    </div>
+    <h3>দ্রুত কাজ</h3>
+    <div class="quick">
+      <button class="primary" data-act="t-new">+ নতুন টুর্নামেন্ট</button>
+      <button data-act="settings">⚙️ সেটিংস ও পেমেন্ট নম্বর</button>
+    </div>
+    ${failed ? `<div class="notice">কিছু তথ্য আনা যায়নি। ইন্টারনেট দেখে "রিফ্রেশ" চাপুন।</div>` : ''}`;
+}
+
+// ---------- ডিপোজিট ----------
+
+function depCard(d) {
+  const pending = d.status === 'pending';
+  return `
+    <div class="item">
+      <div class="item-top">
+        <div><b>${esc(d.name)}</b><div class="muted">UID ${esc(d.ff_id)} · ${esc(d.phone)}</div></div>
+        <div class="amount">${money(d.amount)}</div>
+      </div>
+      <div class="kv">
+        <span>মাধ্যম</span><b>${esc(METHOD[d.method] || d.method)}</b>
+        <span>পাঠানো নম্বর</span><b class="mono">${esc(d.sender_number)}</b>
+        <span>TrxID</span><b class="mono">${esc(d.trx_id)}</b>
+        <span>সময়</span><b>${esc(fmt(d.created_at))}</b>
+      </div>
+      <div class="item-foot">
+        <span class="pill ${esc(d.status)}">${esc(STATUS[d.status])}</span>
+        ${pending ? `<div class="btns">
+          <button class="danger sm" data-act="dep-reject" data-id="${Number(d.id)}">বাতিল</button>
+          <button class="ok sm" data-act="dep-approve" data-id="${Number(d.id)}">অনুমোদন</button></div>` : ''}
+      </div>
+    </div>`;
+}
+
+async function renderDeposits() {
+  $('view').innerHTML = pageHead('ডিপোজিট যাচাই', 'bKash/Nagad/Rocket-এ টাকা মিলিয়ে অনুমোদন দিন') + `
+    <div class="chips">
+      ${chip('pending', 'অপেক্ষমাণ', S.depStatus, 'dep-filter')}
+      ${chip('approved', 'অনুমোদিত', S.depStatus, 'dep-filter')}
+      ${chip('rejected', 'বাতিল', S.depStatus, 'dep-filter')}
+    </div>
+    <div id="list">${loader()}</div>`;
+  try {
+    const list = await api('/api/admin/deposits?status=' + S.depStatus);
+    $('list').innerHTML = list.length ? list.map(depCard).join('') : empty('💳', 'এই তালিকায় কোনো ডিপোজিট নেই');
+  } catch (e) {
+    $('list').innerHTML = errBox(e.message);
+    if (isAuthErr(e.message)) logout();
+  }
+}
+
+// ---------- উইথড্রয়াল ----------
+
+function witCard(w) {
+  const pending = w.status === 'pending';
+  return `
+    <div class="item">
+      <div class="item-top">
+        <div><b>${esc(w.name)}</b><div class="muted">UID ${esc(w.ff_id)} · ${esc(w.phone)}</div></div>
+        <div class="amount">${money(w.amount)}</div>
+      </div>
+      <div class="kv">
+        <span>মাধ্যম</span><b>${esc(METHOD[w.method] || w.method)}</b>
+        <span>টাকা পাঠাতে হবে</span><b class="mono">${esc(w.account_number)}</b>
+        <span>অনুরোধের সময়</span><b>${esc(fmt(w.created_at))}</b>
+      </div>
+      <div class="item-foot">
+        <span class="pill ${esc(w.status)}">${esc(STATUS[w.status])}</span>
+        ${pending ? `<div class="btns">
+          <button class="danger sm" data-act="wit-reject" data-id="${Number(w.id)}">বাতিল ও ফেরত</button>
+          <button class="ok sm" data-act="wit-paid" data-id="${Number(w.id)}">পাঠানো হয়েছে</button></div>` : ''}
+      </div>
+    </div>`;
+}
+
+async function renderWithdrawals() {
+  $('view').innerHTML = pageHead('উইথড্রয়াল', 'ইউজারের টাকা পাঠিয়ে "পাঠানো হয়েছে" চিহ্ন দিন') + `
+    <div class="chips">
+      ${chip('pending', 'অপেক্ষমাণ', S.witStatus, 'wit-filter')}
+      ${chip('paid', 'পরিশোধিত', S.witStatus, 'wit-filter')}
+      ${chip('rejected', 'বাতিল', S.witStatus, 'wit-filter')}
+    </div>
+    <div id="list">${loader()}</div>`;
+  try {
+    const list = await api('/api/admin/withdrawals?status=' + S.witStatus);
+    $('list').innerHTML = list.length ? list.map(witCard).join('') : empty('🏦', 'এই তালিকায় কোনো উইথড্রয়াল নেই');
+  } catch (e) {
+    $('list').innerHTML = errBox(e.message);
+    if (isAuthErr(e.message)) logout();
+  }
+}
+
+// ---------- ইউজার ----------
+
+function userCard(u) {
+  const initial = esc((u.name || '?').trim().charAt(0).toUpperCase());
+  return `
+    <div class="item">
+      <div class="user-row">
+        <div class="avatar">${initial}</div>
+        <div class="info">
+          <b>${esc(u.name)}</b>
+          <div class="muted">UID ${esc(u.ff_id)} · ${esc(u.phone)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="bal">${money(u.balance)}</div>
+          ${u.is_banned ? '<span class="pill banned">ব্যান</span>' : '<span class="pill approved">সক্রিয়</span>'}
+        </div>
+      </div>
+      <div class="btns" style="margin-top:12px">
+        <button class="ok sm" data-act="user-bal" data-id="${Number(u.id)}" data-sign="1">+ ব্যালেন্স</button>
+        <button class="sm" data-act="user-bal" data-id="${Number(u.id)}" data-sign="-1">- ব্যালেন্স</button>
+        ${u.is_banned
+          ? `<button class="sm" data-act="user-unban" data-id="${Number(u.id)}">আনব্যান</button>`
+          : `<button class="danger sm" data-act="user-ban" data-id="${Number(u.id)}">ব্যান</button>`}
+      </div>
+    </div>`;
+}
+
+function drawUsers() {
+  const q = S.search.trim().toLowerCase();
+  const list = S.users.filter(u => !q || `${u.name} ${u.phone} ${u.ff_id}`.toLowerCase().includes(q));
+  $('uCount').textContent = `${list.length} জন ইউজার`;
+  $('uList').innerHTML = list.length
+    ? list.map(userCard).join('')
+    : empty('👥', q ? 'এই নামে কোনো ইউজার পাওয়া যায়নি' : 'এখনো কোনো ইউজার নেই');
+}
+
+async function renderUsers() {
+  $('view').innerHTML = pageHead('ইউজার', 'ব্যালেন্স যোগ, কমানো ও ব্যান ব্যবস্থাপনা',
+    '<button data-act="refresh">রিফ্রেশ</button>') + `
+    <div class="search"><input id="uSearch" placeholder="নাম, ফোন বা UID দিয়ে খুঁজুন" value="${esc(S.search)}"></div>
+    <div class="muted" id="uCount" style="margin:-4px 0 10px"></div>
+    <div id="uList">${loader()}</div>`;
+  $('uSearch').oninput = e => { S.search = e.target.value; drawUsers(); };
+  try {
+    S.users = await api('/api/admin/users');
+    drawUsers();
+  } catch (e) {
+    $('uList').innerHTML = errBox(e.message);
+    if (isAuthErr(e.message)) logout();
+  }
+}
+
+function openBalance(id, sign) {
+  const u = S.users.find(x => Number(x.id) === Number(id));
+  openModal(sign > 0 ? 'ব্যালেন্স যোগ করুন' : 'ব্যালেন্স কমান',
+    `<p class="muted" style="margin-top:0">${esc(u ? u.name : 'ইউজার')} · বর্তমান ${money(u ? u.balance : 0)}</p>
+     <label>পরিমাণ (৳)</label><input id="bAmount" type="number" inputmode="numeric" placeholder="যেমন 100">
+     <label>নোট</label><input id="bNote" placeholder="যেমন: bKash ম্যানুয়াল ডিপোজিট">`,
+    `<button data-act="close">বাতিল</button>
+     <button class="${sign > 0 ? 'ok' : 'danger'}" data-act="bal-save" data-id="${Number(id)}" data-sign="${sign}">
+       ${sign > 0 ? 'যোগ করুন' : 'কমান'}</button>`);
+}
+
+async function saveBalance(id, sign) {
+  const n = Math.abs(parseInt($('bAmount').value, 10));
+  if (!n) { toast('সঠিক পরিমাণ দিন', 'error'); return; }
+  const note = $('bNote').value.trim() || 'অ্যাডমিন সমন্বয়';
+  try {
+    await api(`/api/admin/users/${id}/balance`, {
+      method: 'POST', body: JSON.stringify({ amount: sign * n, note }),
+    });
+    closeModal();
+    toast('ব্যালেন্স আপডেট হয়েছে', 'success');
+    renderUsers();
+  } catch (e) { fail(e); }
+}
+
+// ---------- টুর্নামেন্ট ----------
+
+async function renderTours() {
+  $('view').innerHTML = pageHead('টুর্নামেন্ট', 'তৈরি, এডিট ও রুম প্রকাশ করুন',
+    '<button class="primary" data-act="t-new">+ নতুন</button>') + `<div id="tList">${loader()}</div>`;
+  try {
+    const [tours, cats] = await Promise.all([api('/api/admin/tournaments'), api('/api/admin/categories')]);
+    S.tours = tours;
+    S.cats = cats;
+    drawTours();
+  } catch (e) {
+    $('tList').innerHTML = errBox(e.message);
+    if (isAuthErr(e.message)) logout();
+  }
+}
+
+function drawTours() {
+  const catName = id => (S.cats.find(c => Number(c.id) === Number(id)) || {}).name || '-';
+  $('tList').innerHTML = S.tours.length ? S.tours.map(t => {
+    const joined = Number(t.joined) || 0;
+    const max = Number(t.max_slots) || 1;
+    const pct = Math.min(100, Math.round((joined / max) * 100));
+    return `
+      <div class="item t-item">
+        <div class="t-stripe"></div>
+        <div class="t-body">
+          <div class="item-top">
+            <div><b>${esc(t.name)}</b><div class="muted">${esc(catName(t.category_id))} · ${esc(t.match_type || '')}</div></div>
+            <span class="pill ${esc(t.status)}">${esc(TSTATUS[t.status] || t.status)}</span>
+          </div>
+          <div class="meta">
+            <span>🗺️ ${esc(t.map_name || '-')}</span>
+            <span>📅 ${esc(fmt(t.starts_at))}</span>
+            <span>💳 ফি ${money(t.entry_fee)}</span>
+            <span>🎯 কিল ${money(t.per_kill)}</span>
+            <span>🏆 ${esc(t.prize || '-')}</span>
+          </div>
+          <div class="muted">স্লট ${joined}/${max}</div>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <div class="item-foot">
+            <span class="pill ${t.room_released ? 'open' : 'closed'}">${t.room_released ? 'রুম প্রকাশিত' : 'রুম লুকানো'}</span>
+            <div class="btns">
+              <button class="sm" data-act="t-room" data-id="${Number(t.id)}">রুম</button>
+              <button class="sm" data-act="t-edit" data-id="${Number(t.id)}">এডিট</button>
+              <button class="danger sm" data-act="t-del" data-id="${Number(t.id)}">মুছুন</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('') : empty('🏆', 'এখনো কোনো টুর্নামেন্ট নেই। "+ নতুন" চাপুন।');
+}
+
+function openTourForm(id) {
+  const t = id ? S.tours.find(x => Number(x.id) === Number(id)) : null;
+  const v = (x, d = '') => esc(x ?? d);
+  const catOpts = S.cats.map(c =>
+    `<option value="${Number(c.id)}" ${t && Number(t.category_id) === Number(c.id) ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  const startVal = t && t.starts_at ? String(t.starts_at).replace(' ', 'T').replace('Z', '').slice(0, 16) : '';
+  openModal(t ? 'টুর্নামেন্ট এডিট' : 'নতুন টুর্নামেন্ট', `
+    <label>নাম</label><input id="fName" value="${v(t && t.name)}" placeholder="যেমন Free Fire Cup #1">
+    <label>ক্যাটাগরি</label><select id="fCat"><option value="">— বাছুন —</option>${catOpts}</select>
+    <div class="two">
+      <div><label>ম্যাচ টাইপ</label><input id="fType" value="${v(t && t.match_type, 'Classic')}"></div>
+      <div><label>ম্যাপ</label><input id="fMap" value="${v(t && t.map_name, 'Bermuda')}"></div>
+    </div>
+    <div class="two">
+      <div><label>মোট স্লট</label><input id="fSlots" type="number" value="${v(t && t.max_slots, 48)}"></div>
+      <div><label>প্রতি কিল (৳)</label><input id="fKill" type="number" value="${v(t && t.per_kill, 0)}"></div>
+    </div>
+    <div class="two">
+      <div><label>এন্ট্রি ফি (৳)</label><input id="fFee" type="number" value="${v(t && t.entry_fee, 0)}"></div>
+      <div><label>প্রাইজ পুল</label><input id="fPrize" value="${v(t && t.prize)}" placeholder="যেমন ৳১০০০"></div>
+    </div>
+    <label>শুরুর সময়</label><input id="fStart" type="datetime-local" value="${esc(startVal)}">
+    <label>ছবির লিংক (ঐচ্ছিক)</label><input id="fImg" value="${v(t && t.image_url)}">
+    <label>স্ট্যাটাস</label>
+    <select id="fStatus">
+      ${Object.entries(TSTATUS).map(([k, lbl]) =>
+        `<option value="${k}" ${(t ? t.status : 'open') === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
+    </select>`,
+    `<button data-act="close">বাতিল</button>
+     <button class="primary" data-act="t-save" data-id="${t ? Number(t.id) : ''}">${t ? 'আপডেট করুন' : 'যোগ করুন'}</button>`);
+}
+
+async function saveTour(id) {
+  if (!$('fName').value.trim()) { toast('টুর্নামেন্টের নাম দিন', 'error'); return; }
+  const body = JSON.stringify({
+    name: $('fName').value,
+    category_id: $('fCat').value,
+    match_type: $('fType').value,
+    map_name: $('fMap').value,
+    max_slots: $('fSlots').value,
+    per_kill: $('fKill').value,
+    entry_fee: $('fFee').value,
+    prize: $('fPrize').value,
+    starts_at: $('fStart').value || null,
+    image_url: $('fImg').value,
+    status: $('fStatus').value,
+  });
+  try {
+    if (id) await api(`/api/admin/tournaments/${id}`, { method: 'PUT', body });
+    else await api('/api/admin/tournaments', { method: 'POST', body });
+    closeModal();
+    toast(id ? 'টুর্নামেন্ট আপডেট হয়েছে' : 'টুর্নামেন্ট যোগ হয়েছে', 'success');
+    renderTours();
+  } catch (e) { fail(e); }
+}
+
+function openRoom(id) {
+  const t = S.tours.find(x => Number(x.id) === Number(id));
+  if (!t) return;
+  openModal('রুম আইডি ও পাসওয়ার্ড', `
+    <p class="muted" style="margin-top:0">${esc(t.name)}</p>
+    <p class="muted" style="font-size:12px">"প্রকাশ করুন" চাপলে শুধু জয়েন করা ইউজার রুম আইডি দেখতে পাবে।</p>
+    <label>রুম আইডি</label><input id="rId" value="${esc(t.room_id || '')}">
+    <label>রুম পাসওয়ার্ড</label><input id="rPass" value="${esc(t.room_password || '')}">`,
+    `<button data-act="close">বাতিল</button>
+     <button class="danger" data-act="room-save" data-id="${Number(id)}" data-release="0">লুকিয়ে রাখুন</button>
+     <button class="ok" data-act="room-save" data-id="${Number(id)}" data-release="1">প্রকাশ করুন</button>`);
+}
+
+async function saveRoom(id, release) {
+  const roomId = $('rId').value.trim();
+  const pass = $('rPass').value.trim();
+  if (release && !roomId) { toast('রুম আইডি দিন', 'error'); return; }
+  try {
+    await api(`/api/admin/tournaments/${id}/room`, {
+      method: 'PUT',
+      body: JSON.stringify({ room_id: roomId, room_password: pass, release }),
+    });
+    closeModal();
+    toast(release ? 'রুম প্রকাশ হয়েছে' : 'রুম লুকানো হয়েছে', 'success');
+    renderTours();
+  } catch (e) { fail(e); }
+}
+
+// ---------- সেটিংস ----------
+
+async function openSettings() {
+  openModal('সেটিংস', loader(), '');
+  let s = {};
+  try { s = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json()); } catch {}
+  $('mBody').innerHTML = `
+    <h3 style="margin-top:0">অ্যাপের লেখা</h3>
+    <label>অ্যাপের শিরোনাম</label><input id="sTitle" value="${esc(s.app_title || '')}">
+    <label>স্বাগত বার্তা</label><input id="sWelcome" value="${esc(s.welcome_text || '')}">
+    <h3>পেমেন্ট নম্বর</h3>
+    <p class="muted" style="margin-top:0">ইউজার ডিপোজিট এই নম্বরগুলোতে পাঠাবে</p>
+    <label>bKash</label><input id="sBkash" inputmode="tel" value="${esc(s.bkash_number || '')}">
+    <label>Nagad</label><input id="sNagad" inputmode="tel" value="${esc(s.nagad_number || '')}">
+    <label>Rocket</label><input id="sRocket" inputmode="tel" value="${esc(s.rocket_number || '')}">`;
+  $('mFoot').innerHTML = `<button data-act="close">বাতিল</button>
+    <button class="primary" data-act="settings-save">সেভ করুন</button>`;
+}
+
+async function saveSettings() {
+  const body = {
+    app_title: $('sTitle').value.trim(),
+    welcome_text: $('sWelcome').value.trim(),
+    bkash_number: $('sBkash').value.trim(),
+    nagad_number: $('sNagad').value.trim(),
+    rocket_number: $('sRocket').value.trim(),
+  };
+  try {
+    await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify(body) });
+    closeModal();
+    toast('সেটিংস সেভ হয়েছে', 'success');
+  } catch (e) { fail(e); }
+}
+
+// ---------- লগইন ও শুরু ----------
+
+async function wake() {
+  $('serverMsg').textContent = 'সার্ভার চেক হচ্ছে...';
+  try {
+    await fetch(API + '/api/health', { cache: 'no-store' });
+    $('serverMsg').textContent = '● সার্ভার সংযুক্ত';
+    $('serverMsg').style.color = '#22c55e';
+  } catch {
+    $('serverMsg').textContent = 'সার্ভার জাগছে। ৬০ সেকেন্ড পর লগইন করুন।';
+    $('serverMsg').style.color = '#fbbf24';
+  }
+}
+
+async function adminLogin() {
+  $('loginMsg').textContent = 'লগইন হচ্ছে...';
+  try {
+    const d = await api('/api/admin/login', {
+      method: 'POST', body: JSON.stringify({ password: $('adminPass').value }),
+    });
+    adminToken = d.token;
+    sessionStorage.setItem('adminToken', adminToken);
+    $('loginMsg').textContent = '';
+    showApp();
+  } catch (e) { $('loginMsg').textContent = e.message; }
+}
+
+function showApp() {
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  setView('dash');
+}
+
+function logout() {
+  adminToken = '';
+  sessionStorage.removeItem('adminToken');
+  location.reload();
+}
+
+$('loginBtn').onclick = adminLogin;
+$('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+
+if (adminToken) {
+  showApp();
+} else {
+  $('login').classList.remove('hidden');
+  wake();
+}
+</script>
+</body>
+</html>
