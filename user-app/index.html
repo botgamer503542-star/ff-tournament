@@ -25,7 +25,6 @@ label{display:block;font-size:13px;color:var(--muted)}
 .btn.red{background:linear-gradient(135deg,#ff1f36,var(--red2));border:none}
 .btn:disabled{background:#1f1f2b;color:#6b7280;border-color:#1f1f2b;cursor:not-allowed}
 
-/* লগইন */
 #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at top,#3a0a10 0%,var(--bg) 60%)}
 .auth-wrap{width:100%;max-width:380px;text-align:center}
 .alogo{width:82px;height:82px;border-radius:22px;box-shadow:0 12px 30px rgba(255,42,61,.35)}
@@ -37,7 +36,6 @@ label{display:block;font-size:13px;color:var(--muted)}
 .seg button.on{background:var(--red);color:#fff}
 .msg{min-height:20px;margin-top:10px;color:var(--gold);font-size:14px;text-align:center}
 
-/* হেডার */
 .top{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(7,7,11,.95);border-bottom:1px solid #1f1f2b}
 .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:.5px}
 .brand img{width:34px;height:34px;border-radius:9px}
@@ -50,7 +48,6 @@ main{padding:14px}
 .view{display:none}
 .view.on{display:block}
 
-/* হিরো ও ঘোষণা */
 .hero{position:relative;width:100%;aspect-ratio:12/5;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#3a0a10,#0d0d13)}
 .slides{display:flex;width:100%;height:100%;transition:transform .5s ease}
 .slide{flex:0 0 100%;height:100%}
@@ -64,7 +61,6 @@ main{padding:14px}
 @keyframes mq{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
 .sec{margin:18px 0 10px;font-size:17px;font-weight:800}
 
-/* ক্যাটাগরি কার্ড */
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cc{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0;color:var(--text);text-align:left;font-family:inherit;transition:transform .15s}
 .cc:active{transform:scale(.98)}
@@ -73,7 +69,6 @@ main{padding:14px}
 .cn{padding:10px 12px 2px;font-weight:800;font-size:15px}
 .cm{padding:0 12px 12px;font-size:12px;color:#ff6b78}
 
-/* ম্যাচ কার্ড */
 .cathead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .cathead h2{margin:0;font-size:18px}
 .mc{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
@@ -107,12 +102,10 @@ main{padding:14px}
 .roombox{margin-top:10px;background:var(--card2);border-radius:12px;padding:11px;font-size:15px;line-height:1.7}
 .roombox b{color:#67e8f9}
 
-/* ট্যাব */
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .tab{padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-weight:700;font-family:inherit}
 .tab.on{background:var(--red);border-color:var(--red);color:#fff}
 
-/* প্রোফাইল ও ওয়ালেট */
 .prof{text-align:center;padding:10px 0 16px}
 .pav{width:84px;height:84px;margin:0 auto 10px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900}
 .wcard{background:linear-gradient(135deg,#7f1d1d,#0f0f16 70%);border:1px solid #3a1217;border-radius:20px;padding:20px}
@@ -133,13 +126,11 @@ main{padding:14px}
 .pill.rejected{background:var(--red);color:#fff}
 .soon{text-align:center;padding:60px 10px}
 
-/* নিচের মেনু */
 .bnav{position:fixed;left:10px;right:10px;bottom:10px;z-index:30;display:flex;background:#0d0d13;border:1px solid var(--line);border-radius:20px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.6)}
 .bnav button{flex:1;background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:8px 0;border-radius:14px;font-family:inherit}
 .bnav button i{font-style:normal;font-size:19px}
 .bnav button.on{color:#fff;background:rgba(255,42,61,.18)}
 
-/* মডাল */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:#0d0d13;border-top:1px solid #3a1217;border-radius:22px 22px 0 0;padding:18px}
 .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -155,7 +146,6 @@ main{padding:14px}
 .prz div{padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
 .prz b{float:right}
 
-/* টোস্ট */
 .toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);width:92%;max-width:420px;z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{background:var(--card2);border-left:4px solid var(--red);padding:12px 14px;border-radius:12px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transform:translateY(-8px);transition:.25s}
 .toast.show{opacity:1;transform:none}
@@ -165,7 +155,6 @@ main{padding:14px}
 </head>
 <body>
 
-<!-- লগইন / রেজিস্ট্রেশন -->
 <section id="auth" class="hidden">
   <div class="auth-wrap">
     <img class="alogo" src="icon-192.png" alt="" onerror="this.remove()">
@@ -193,7 +182,6 @@ main{padding:14px}
   </div>
 </section>
 
-<!-- মূল অ্যাপ -->
 <div id="app" class="hidden">
   <header class="top">
     <div class="brand"><img src="icon-192.png" alt="" onerror="this.style.display='none'"><span id="brand">FF <b>BATTLE ZONE</b></span></div>
@@ -205,7 +193,6 @@ main{padding:14px}
   </header>
 
   <main>
-    <!-- হোম -->
     <section class="view" id="v-home">
       <div class="hero">
         <div class="slides" id="slides"></div>
@@ -216,13 +203,11 @@ main{padding:14px}
       <div class="cgrid" id="cgrid"></div>
     </section>
 
-    <!-- ক্যাটাগরির ম্যাচ -->
     <section class="view" id="v-cat">
       <div class="cathead"><button class="ib" data-act="go" data-id="home">←</button><h2 id="catTitle"></h2></div>
       <div id="catList"></div>
     </section>
 
-    <!-- আমার ম্যাচ -->
     <section class="view" id="v-matches">
       <div class="tabs">
         <button class="tab on" data-act="mtab" data-id="up">আপকামিং</button>
@@ -231,7 +216,6 @@ main{padding:14px}
       <div id="myList"></div>
     </section>
 
-    <!-- শপ -->
     <section class="view" id="v-shop">
       <div class="soon">
         <div style="font-size:52px">🛒</div>
@@ -240,7 +224,6 @@ main{padding:14px}
       </div>
     </section>
 
-    <!-- প্রোফাইল ও ওয়ালেট -->
     <section class="view" id="v-profile">
       <div class="prof">
         <div class="pav" id="pav">?</div>
@@ -273,7 +256,6 @@ main{padding:14px}
   </nav>
 </div>
 
-<!-- মডাল -->
 <div class="modal hidden" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="sheet">
     <div class="sh"><h3 id="sheetTitle"></h3><button class="sx" data-act="close">✕</button></div>
@@ -297,8 +279,6 @@ let MY = [];
 const S = { view: 'home', cat: '', mtab: 'up', dM: 'bkash', wM: 'bkash', heroIdx: 0, heroTimer: null };
 const METHOD = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket' };
 const STATUS_BN = { pending: 'অপেক্ষমাণ', approved: 'অনুমোদিত', paid: 'পরিশোধিত', rejected: 'বাতিল' };
-
-// ---------- সহায়ক ----------
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -369,8 +349,6 @@ function catImg(slug) {
 }
 function thumbOf(t) { return t.image_url || catImg(t.category_slug || 'home'); }
 
-// ---------- মডাল ----------
-
 function openModal(title, body, foot) {
   $('sheetTitle').textContent = title;
   $('sheetBody').innerHTML = body;
@@ -378,8 +356,6 @@ function openModal(title, body, foot) {
   $('modal').classList.remove('hidden');
 }
 function closeModal() { $('modal').classList.add('hidden'); }
-
-// ---------- অ্যাকাউন্ট ----------
 
 function showAuth(which) {
   const login = which === 'login';
@@ -434,8 +410,6 @@ function logout(msg) {
   location.reload();
 }
 
-// ---------- নেভিগেশন ----------
-
 function showView(v, push) {
   if (!token) return;
   if (push && (v !== S.view || v === 'cat')) history.pushState({ v, cat: S.cat }, '');
@@ -456,8 +430,6 @@ window.addEventListener('popstate', e => {
   if (st.cat !== undefined) S.cat = st.cat;
   showView(st.v || 'home', false);
 });
-
-// ---------- হোম ----------
 
 function renderHero() {
   const urls = [SETTINGS.banner_home || './home.jpg', catImg('br-solo'), catImg('lone-wolf'), catImg('cs-2v2')];
@@ -497,8 +469,6 @@ async function loadHome() {
     </button>`;
   }).join('') || empty('🎮', 'এখনো কোনো ক্যাটাগরি নেই');
 }
-
-// ---------- ম্যাচ কার্ড ----------
 
 function matchCard(t) {
   const id = Number(t.id);
@@ -558,8 +528,6 @@ function matchCard(t) {
     </div>`;
 }
 
-// ---------- ক্যাটাগরি ----------
-
 async function loadCat() {
   const c = CATS.find(x => x.slug === S.cat);
   $('catTitle').textContent = c ? c.name : 'ম্যাচ';
@@ -578,8 +546,6 @@ function renderCat() {
   const list = ALL.filter(t => t.category_slug === S.cat);
   $('catList').innerHTML = list.map(matchCard).join('') || empty('🎯', 'এই ক্যাটাগরিতে এখন কোনো ম্যাচ নেই');
 }
-
-// ---------- জয়েন, রুম, প্রাইজ ----------
 
 function openJoin(id) {
   const t = ALL.find(x => Number(x.id) === Number(id));
@@ -641,8 +607,6 @@ function openPrize(id) {
   </div>`, `<button class="btn" data-act="close">বন্ধ করুন</button>`);
 }
 
-// ---------- আমার ম্যাচ ----------
-
 async function loadMy() {
   $('myList').innerHTML = loader();
   try {
@@ -686,8 +650,6 @@ function renderMy() {
   }).join('') || empty('🎯', 'আপনি এখনো কোনো ম্যাচে জয়েন করেননি');
 }
 
-// ---------- ওয়ালেট ও প্রোফাইল ----------
-
 async function loadWallet() {
   if (!token) return;
   try {
@@ -727,8 +689,6 @@ async function loadProfile() {
     if (isAuthErr(e.message)) logout(e.message);
   }
 }
-
-// ---------- Add Money ----------
 
 function showPayNo() {
   const num = SETTINGS[S.dM + '_number'];
@@ -773,8 +733,6 @@ async function submitDep() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ---------- Withdraw ----------
-
 function pickW(m) {
   S.wM = m;
   $('sheetBody').querySelectorAll('.seg3 button').forEach(b => b.classList.toggle('on', b.dataset.id === m));
@@ -807,8 +765,6 @@ async function submitWit() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ---------- ক্লিক হ্যান্ডলার ----------
-
 const A = {
   close: () => closeModal(),
   login: () => login(),
@@ -838,8 +794,6 @@ document.addEventListener('click', e => {
   if (fn) fn(b.dataset.id);
 });
 
-// ---------- শুরু ----------
-
 async function loadSettings() {
   try {
     SETTINGS = await fetch(API + '/api/settings', { cache: 'no-store' }).then(r => r.json());
@@ -864,4 +818,4 @@ async function loadSettings() {
 })();
 </script>
 </body>
-  </html>
+</html>
