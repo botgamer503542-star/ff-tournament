@@ -1,9 +1,14 @@
 {
-  "name": "FF Admin",
-  "short_name": "FFAdmin",
+  "name": "FF Battle Zone Admin",
+  "short_name": "FFB Admin",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "icons": []
+  "orientation": "portrait",
+  "background_color": "#0b0f1a",
+  "theme_color": "#0b0f1a",
+  "icons": [
+    { "src": "../user-app/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../user-app/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }
