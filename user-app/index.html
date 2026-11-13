@@ -132,6 +132,11 @@ main{padding:14px}
 .bnav button i{font-style:normal;font-size:19px}
 .bnav button.on{color:#fff;background:rgba(255,42,61,.18)}
 
+.support-fab{position:fixed;right:14px;bottom:96px;z-index:35;width:72px;height:72px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff1f36,#b3121f);color:#fff;box-shadow:0 10px 28px rgba(255,42,61,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+.support-fab .ic{font-size:26px;line-height:1}
+.support-fab .tx{font-size:11px;font-weight:800;letter-spacing:.3px}
+.support-fab:active{transform:scale(.95)}
+
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:#0d0d13;border-top:1px solid #3a1217;border-radius:22px 22px 0 0;padding:18px}
 .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -146,6 +151,7 @@ main{padding:14px}
 .note{background:var(--card2);border-radius:12px;padding:11px;font-size:13px;line-height:1.6;margin-bottom:10px}
 .prz div{padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
 .prz b{float:right}
+.long{white-space:pre-line;font-size:14px;line-height:1.8;background:var(--card2);border-radius:12px;padding:12px;max-height:55vh;overflow-y:auto}
 
 .toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);width:92%;max-width:420px;z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{background:var(--card2);border-left:4px solid var(--red);padding:12px 14px;border-radius:12px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transform:translateY(-8px);transition:.25s}
@@ -187,7 +193,6 @@ main{padding:14px}
   <header class="top">
     <div class="brand"><img src="icon-192.png" alt="" onerror="this.style.display='none'"><span id="brand">FF <b>BATTLE ZONE</b></span></div>
     <div class="top-r">
-      <button class="ib" data-act="support" title="সাপোর্ট">🎧</button>
       <button class="ib" data-act="soon" title="নোটিফিকেশন">🔔</button>
       <button class="ib" data-act="soon" title="ফলাফল">🏆</button>
       <button class="wchip" id="wChip" data-act="go" data-id="profile">৳ 0</button>
@@ -249,6 +254,11 @@ main{padding:14px}
       <button class="btn" style="margin-top:14px" data-act="logout">লগআউট</button>
     </section>
   </main>
+
+  <button class="support-fab" data-act="support" aria-label="সাপোর্ট">
+    <span class="ic">🎧</span>
+    <span class="tx">সাপোর্ট</span>
+  </button>
 
   <nav class="bnav" id="nav">
     <button class="on" data-act="go" data-id="home"><i>🏠</i>হোম</button>
@@ -526,6 +536,7 @@ function matchCard(t) {
         <div class="full">${joinBtn}</div>
         ${roomBtn}
         <button class="btn" data-act="prize" data-id="${id}">Prize Pool</button>
+        <button class="btn" data-act="rules" data-id="${id}">Rules</button>
       </div>
     </div>`;
 }
@@ -601,12 +612,26 @@ async function openRoom(id) {
 function openPrize(id) {
   const t = ALL.find(x => Number(x.id) === Number(id));
   if (!t) return;
-  openModal('Prize Pool', `<div class="prz">
-    <div>🏆 প্রাইজ পুল <b>${esc(t.prize || '-')}</b></div>
-    <div>🎯 প্রতি কিল <b>${money(t.per_kill)}</b></div>
-    <div>💳 এন্ট্রি ফি <b>${money(t.entry_fee)}</b></div>
-    <div>👥 স্লট <b>${Number(t.joined) || 0}/${Number(t.max_slots) || 0}</b></div>
-  </div>`, `<button class="btn" data-act="close">বন্ধ করুন</button>`);
+  const details = t.prize_details
+    ? `<div class="long">${esc(t.prize_details)}</div>`
+    : `<p class="muted">প্রাইজ বিস্তারিত এখনো দেওয়া হয়নি।</p>`;
+  openModal('Prize Pool', `
+    <div class="prz" style="margin-bottom:12px">
+      <div>🏆 প্রাইজ পুল <b>${esc(t.prize || '-')}</b></div>
+      <div>🎯 প্রতি কিল <b>${money(t.per_kill)}</b></div>
+      <div>💳 এন্ট্রি ফি <b>${money(t.entry_fee)}</b></div>
+    </div>
+    ${details}`,
+    `<button class="btn" data-act="close">বন্ধ করুন</button>`);
+}
+
+function openRules(id) {
+  const t = ALL.find(x => Number(x.id) === Number(id));
+  if (!t) return;
+  const body = t.rules
+    ? `<div class="long">${esc(t.rules)}</div>`
+    : `<p class="muted">রুলস এখনো দেওয়া হয়নি।</p>`;
+  openModal('Rules', body, `<button class="btn" data-act="close">বন্ধ করুন</button>`);
 }
 
 async function loadMy() {
@@ -787,6 +812,7 @@ const A = {
   doJoin: id => doJoin(id),
   room: id => openRoom(id),
   prize: id => openPrize(id),
+  rules: id => openRules(id),
   mtab: id => { S.mtab = id; renderMy(); },
   deposit: () => openDeposit(),
   withdraw: () => openWithdraw(),
