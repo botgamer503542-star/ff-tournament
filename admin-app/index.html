@@ -857,9 +857,14 @@ async function openSettings() {
     <h3 style="margin-top:0">অ্যাপের লেখা</h3>
     <label>অ্যাপের শিরোনাম</label><input id="sTitle" value="${esc(s.app_title || '')}">
     <label>স্বাগত বার্তা</label><input id="sWelcome" value="${esc(s.welcome_text || '')}">
-    <h3>সাপোর্ট</h3>
+    <h3>সাপোর্ট (ইউজার অ্যাপের 🎧 বাটন)</h3>
     <label>টেলিগ্রাম ইউজারনেম বা লিংক</label>
     <input id="sTg" value="${esc(s.support_telegram || '')}" placeholder="যেমন @yourname">
+    <h3>ডেভেলপার যোগাযোগ (প্রোফাইল পেজে দেখাবে)</h3>
+    <label>ডেভেলপার Telegram (ইউজারনেম বা লিংক)</label>
+    <input id="dTg" value="${esc(s.dev_telegram || '')}" placeholder="যেমন @devname">
+    <label>ডেভেলপার WhatsApp নম্বর</label>
+    <input id="dWa" inputmode="tel" value="${esc(s.dev_whatsapp || '')}" placeholder="যেমন 01XXXXXXXXX">
     <h3>পেমেন্ট নম্বর</h3>
     <p class="muted" style="margin-top:0">ইউজার ডিপোজিট এই নম্বরগুলোতে পাঠাবে</p>
     <label>bKash</label><input id="sBkash" inputmode="tel" value="${esc(s.bkash_number || '')}">
@@ -874,6 +879,8 @@ async function saveSettings() {
     app_title: $('sTitle').value.trim(),
     welcome_text: $('sWelcome').value.trim(),
     support_telegram: $('sTg').value.trim(),
+    dev_telegram: $('dTg').value.trim(),
+    dev_whatsapp: $('dWa').value.trim(),
     bkash_number: $('sBkash').value.trim(),
     nagad_number: $('sNagad').value.trim(),
     rocket_number: $('sRocket').value.trim(),
@@ -931,4 +938,4 @@ if (adminToken) {
 }
 </script>
 </body>
-  </html>
+</html>
