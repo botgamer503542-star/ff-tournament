@@ -56,7 +56,7 @@ main{padding:16px}
 h3{margin:22px 0 10px;font-size:16px}
 .notice{margin-top:16px;padding:12px;border-radius:12px;background:#3b2a06;color:#fde68a;font-size:14px}
 
-.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;padding-bottom:2px}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;border-radius:999px;padding:8px 14px;font-size:13px;background:var(--card)}
 .chip.on{background:linear-gradient(135deg,#6d5efc,#22d3ee);color:#fff;border:none}
@@ -73,8 +73,8 @@ h3{margin:22px 0 10px;font-size:16px}
 
 .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--card2);color:var(--muted)}
 .pill.pending{background:var(--amber);color:#111}
-.pill.approved,.pill.paid,.pill.open,.pill.up{background:var(--green);color:#fff}
-.pill.rejected,.pill.hidden,.pill.full{background:var(--red);color:#fff}
+.pill.approved,.pill.paid,.pill.open,.pill.up,.pill.done{background:var(--green);color:#fff}
+.pill.rejected,.pill.hidden,.pill.full,.pill.cancelled{background:var(--red);color:#fff}
 .pill.closed{background:#475569;color:#fff}
 .pill.banned{background:var(--red);color:#fff}
 
@@ -179,6 +179,10 @@ const $ = id => document.getElementById(id);
 
 let adminToken = sessionStorage.getItem('adminToken') || '';
 const S = { view: 'dash', depStatus: 'pending', witStatus: 'pending', users: [], tours: [], cats: [], search: '' };
+let TOUR_CAT = 'all';
+let SHOP_TAB = 'products';
+let ORDER_ST = 'pending';
+let PRODUCTS = [];
 
 const METHOD = { bkash: 'bKash', nagad: 'Nagad', rocket: 'Rocket' };
 const STATUS = { pending: 'অপেক্ষমাণ', approved: 'অনুমোদিত', paid: 'পরিশোধিত', rejected: 'বাতিল' };
@@ -193,6 +197,9 @@ function empty(icon, text) { return `<div class="empty"><div class="big">${icon}
 function errBox(text) { return `<div class="err-box">${esc(text)}</div>`; }
 function loader() { return '<div class="loader"></div>'; }
 function isAuthErr(msg) { return /অনুমতি|মেয়াদ/.test(msg || ''); }
+function pageHead(title, sub, extra = '') {
+  return `<div class="page-head"><div><h2>${esc(title)}</h2><p class="muted">${esc(sub)}</p></div>${extra}</div>`;
+}
 
 function toast(msg, type = 'info') {
   const el = document.createElement('div');
@@ -288,6 +295,7 @@ const A = {
     try { await api(`/api/admin/unban/${id}`, { method: 'POST' }); toast('ব্যান তোলা হয়েছে', 'success'); renderUsers(); }
     catch (e) { fail(e); }
   }, 'ব্যান তুলুন'),
+  'tcat': id => { TOUR_CAT = id; drawTours(); },
   't-new': () => openTourForm(null),
   't-edit': id => openTourForm(id),
   't-save': id => saveTour(id),
@@ -299,6 +307,15 @@ const A = {
     catch (e) { fail(e); }
   }, 'মুছে ফেলুন', true),
   'settings-save': () => saveSettings(),
+  'shop-admin': () => { SHOP_TAB = 'products'; openShopAdmin(); },
+  shopTabA: id => { SHOP_TAB = id; drawShopBody(); },
+  ordSt: id => { ORDER_ST = id; drawShopBody(); },
+  pAdd: () => openProductForm(null),
+  pEdit: id => openProductForm(id),
+  pSave: id => saveProduct(id),
+  pToggle: id => toggleProduct(id),
+  oDone: id => orderAction(id, 'done'),
+  oCancel: id => orderAction(id, 'cancel'),
 };
 
 document.addEventListener('click', e => {
@@ -321,10 +338,6 @@ function renderView() {
   if (S.view === 'withdrawals') return renderWithdrawals();
   if (S.view === 'users') return renderUsers();
   if (S.view === 'tournaments') return renderTours();
-}
-
-function pageHead(title, sub, extra = '') {
-  return `<div class="page-head"><div><h2>${esc(title)}</h2><p class="muted">${esc(sub)}</p></div>${extra}</div>`;
 }
 
 function chip(val, label, cur, act) {
@@ -363,6 +376,7 @@ async function renderDash() {
     <h3>দ্রুত কাজ</h3>
     <div class="quick">
       <button class="primary" data-act="t-new">+ নতুন টুর্নামেন্ট</button>
+      <button data-act="shop-admin">🛒 শপ ম্যানেজ</button>
       <button data-act="settings">⚙️ সেটিংস, সাপোর্ট ও পেমেন্ট নম্বর</button>
     </div>
     ${failed ? `<div class="notice">কিছু তথ্য আনা যায়নি। ইন্টারনেট দেখে "রিফ্রেশ" চাপুন।</div>` : ''}`;
@@ -510,18 +524,36 @@ async function saveBalance(id, sign) {
 }
 
 async function renderTours() {
-  $('view').innerHTML = pageHead('টুর্নামেন্ট', 'তৈরি, এডিট, রুম ও জয়েনার দেখুন', '<button class="primary" data-act="t-new">+ নতুন</button>') + `<div id="tList">${loader()}</div>`;
+  $('view').innerHTML = pageHead('টুর্নামেন্ট', 'ক্যাটাগরি অনুযায়ী আলাদা করে দেখুন',
+    '<button class="primary" data-act="t-new">+ নতুন</button>') +
+    `<div id="tCats"></div><div id="tList">${loader()}</div>`;
   try {
     const [tours, cats] = await Promise.all([api('/api/admin/tournaments'), api('/api/admin/categories')]);
     S.tours = tours;
     S.cats = cats;
     drawTours();
-  } catch (e) { $('tList').innerHTML = errBox(e.message); if (isAuthErr(e.message)) logout(); }
+  } catch (e) {
+    $('tList').innerHTML = errBox(e.message);
+    if (isAuthErr(e.message)) logout();
+  }
 }
 
 function drawTours() {
+  const catOf = t => Number(t.category_id) || 0;
   const catName = id => (S.cats.find(c => Number(c.id) === Number(id)) || {}).name || '-';
-  $('tList').innerHTML = S.tours.length ? S.tours.map(t => {
+
+  const tabs = [{ id: 'all', name: 'সব' }, ...S.cats.map(c => ({ id: String(c.id), name: c.name }))];
+  if (S.tours.some(t => !catOf(t))) tabs.push({ id: '0', name: 'ক্যাটাগরি নেই' });
+
+  const countFor = id => S.tours.filter(t => id === 'all' || catOf(t) === Number(id)).length;
+
+  $('tCats').innerHTML = `<div class="chips">${tabs.map(x =>
+    `<button class="chip ${TOUR_CAT === x.id ? 'on' : ''}" data-act="tcat" data-id="${esc(x.id)}">${esc(x.name)} (${countFor(x.id)})</button>`
+  ).join('')}</div>`;
+
+  const list = S.tours.filter(t => TOUR_CAT === 'all' || catOf(t) === Number(TOUR_CAT));
+
+  $('tList').innerHTML = list.length ? list.map(t => {
     const joined = Number(t.joined) || 0;
     const max = Number(t.max_slots) || 1;
     const pct = Math.min(100, Math.round((joined / max) * 100));
@@ -553,7 +585,9 @@ function drawTours() {
           </div>
         </div>
       </div>`;
-  }).join('') : empty('🏆', 'এখনো কোনো টুর্নামেন্ট নেই। "+ নতুন" চাপুন।');
+  }).join('') : empty('🏆', TOUR_CAT === 'all'
+    ? 'এখনো কোনো টুর্নামেন্ট নেই। "+ নতুন" চাপুন।'
+    : 'এই ক্যাটাগরিতে এখনো কোনো টুর্নামেন্ট নেই।');
 }
 
 async function openParticipants(id) {
@@ -669,6 +703,152 @@ async function saveRoom(id, release) {
   } catch (e) { fail(e); }
 }
 
+function openShopAdmin() {
+  openModal('🛒 শপ ম্যানেজ', `
+    <div class="chips" style="margin-bottom:12px">
+      <button class="chip ${SHOP_TAB === 'products' ? 'on' : ''}" data-act="shopTabA" data-id="products">প্রোডাক্ট</button>
+      <button class="chip ${SHOP_TAB === 'orders' ? 'on' : ''}" data-act="shopTabA" data-id="orders">অর্ডার</button>
+    </div>
+    <div id="shopBody">${loader()}</div>`,
+    `<button data-act="close">বন্ধ করুন</button>`);
+  drawShopBody();
+}
+
+async function drawShopBody() {
+  const body = $('shopBody');
+  if (!body) return;
+  document.querySelectorAll('[data-act="shopTabA"]').forEach(b => b.classList.toggle('on', b.dataset.id === SHOP_TAB));
+  body.innerHTML = loader();
+  try {
+    if (SHOP_TAB === 'products') {
+      PRODUCTS = await api('/api/admin/products');
+      body.innerHTML = `<button class="primary block" data-act="pAdd">+ নতুন প্রোডাক্ট</button>` +
+        PRODUCTS.map(p => `
+          <div class="item">
+            <div class="item-top">
+              <div><b>${esc(p.name)}</b><div class="muted">${esc(p.kind)} · ${Number(p.amount)} ডায়মন্ড</div></div>
+              <div class="amount">${money(p.price)}</div>
+            </div>
+            ${p.description ? `<div class="muted" style="margin-top:6px;white-space:pre-line">${esc(p.description)}</div>` : ''}
+            <div class="item-foot" style="margin-top:10px">
+              <span class="pill ${p.is_active ? 'open' : 'closed'}">${p.is_active ? 'স্টকে আছে' : 'Out Of Stock'}</span>
+              <div class="btns">
+                <button class="sm" data-act="pToggle" data-id="${Number(p.id)}">${p.is_active ? 'Out Of Stock করুন' : 'স্টকে আনুন'}</button>
+                <button class="sm primary" data-act="pEdit" data-id="${Number(p.id)}">এডিট</button>
+              </div>
+            </div>
+          </div>`).join('') || empty('🛒', 'এখনো কোনো প্রোডাক্ট নেই। "+ নতুন প্রোডাক্ট" চাপুন।');
+    } else {
+      const labels = { pending: 'অপেক্ষমাণ', done: 'সম্পন্ন', cancelled: 'বাতিল' };
+      body.innerHTML = `<div class="chips">
+          ${['pending', 'done', 'cancelled'].map(s =>
+            `<button class="chip ${ORDER_ST === s ? 'on' : ''}" data-act="ordSt" data-id="${s}">${labels[s]}</button>`).join('')}
+        </div><div id="ordList">${loader()}</div>`;
+      const list = await api('/api/admin/orders?status=' + ORDER_ST);
+      const pillCls = { pending: 'pending', done: 'approved', cancelled: 'rejected' };
+      $('ordList').innerHTML = list.map(o => `
+        <div class="item">
+          <div class="item-top">
+            <div><b>${esc(o.product_name)}</b><div class="muted">${esc(o.user_name)} · ${esc(o.phone)}</div></div>
+            <div class="amount">${money(o.price)}</div>
+          </div>
+          <div class="kv">
+            <span>Free Fire UID</span><b class="mono">${esc(o.ff_uid)}</b>
+            <span>সময়</span><b>${esc(fmt(o.created_at))}</b>
+          </div>
+          <div class="item-foot">
+            <span class="pill ${pillCls[o.status] || ''}">${esc(labels[o.status] || o.status)}</span>
+            ${o.status === 'pending' ? `<div class="btns">
+              <button class="danger sm" data-act="oCancel" data-id="${Number(o.id)}">বাতিল ও ফেরত</button>
+              <button class="ok sm" data-act="oDone" data-id="${Number(o.id)}">UID-তে পাঠানো হয়েছে</button>
+            </div>` : ''}
+          </div>
+        </div>`).join('') || empty('🧾', 'এই তালিকায় কোনো অর্ডার নেই');
+    }
+  } catch (e) {
+    body.innerHTML = errBox(e.message);
+    if (isAuthErr(e.message)) logout();
+  }
+}
+
+function openProductForm(id) {
+  const p = id ? PRODUCTS.find(x => Number(x.id) === Number(id)) : null;
+  openModal(p ? 'প্রোডাক্ট এডিট' : 'নতুন প্রোডাক্ট', `
+    <label>নাম</label>
+    <input id="pName" value="${esc(p ? p.name : '')}" placeholder="যেমন 115 Diamond">
+    <div class="two">
+      <div><label>ধরন</label>
+        <select id="pKind">
+          ${['diamond', 'weekly', 'monthly', 'other'].map(k => `<option value="${k}" ${p && p.kind === k ? 'selected' : ''}>${k}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>ডায়মন্ড সংখ্যা</label><input id="pAmt" type="number" value="${esc(p ? p.amount : '')}"></div>
+    </div>
+    <div class="two">
+      <div><label>দাম (৳)</label><input id="pPrice" type="number" value="${esc(p ? p.price : '')}"></div>
+      <div><label>অবস্থা</label>
+        <select id="pActive">
+          <option value="true" ${!p || p.is_active ? 'selected' : ''}>স্টকে আছে</option>
+          <option value="false" ${p && !p.is_active ? 'selected' : ''}>Out Of Stock</option>
+        </select>
+      </div>
+    </div>
+    <label>বিবরণ (বাংলা বা ইংরেজি, নতুন লাইন চলবে)</label>
+    <textarea id="pDesc" placeholder="যেমন: দ্রুত ডেলিভারি, ৫-১০ মিনিটে">${esc(p ? p.description || '' : '')}</textarea>`,
+    `<button data-act="shop-admin">বাতিল</button>
+     <button class="primary" data-act="pSave" data-id="${p ? Number(p.id) : ''}">সেভ করুন</button>`);
+}
+
+async function saveProduct(id) {
+  if (!$('pName').value.trim()) { toast('প্রোডাক্টের নাম দিন', 'error'); return; }
+  const body = JSON.stringify({
+    name: $('pName').value,
+    kind: $('pKind').value,
+    amount: $('pAmt').value,
+    price: $('pPrice').value,
+    description: $('pDesc').value,
+    is_active: $('pActive').value === 'true',
+  });
+  try {
+    if (id) await api(`/api/admin/products/${id}`, { method: 'PUT', body });
+    else await api('/api/admin/products', { method: 'POST', body });
+    toast('প্রোডাক্ট সেভ হয়েছে', 'success');
+    SHOP_TAB = 'products';
+    openShopAdmin();
+  } catch (e) { fail(e); }
+}
+
+async function toggleProduct(id) {
+  const p = PRODUCTS.find(x => Number(x.id) === Number(id));
+  if (!p) return;
+  try {
+    await api(`/api/admin/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: p.name, kind: p.kind, amount: p.amount, price: p.price,
+        description: p.description || '', is_active: !p.is_active,
+      }),
+    });
+    toast(p.is_active ? 'Out Of Stock করা হয়েছে' : 'স্টকে আনা হয়েছে', 'success');
+    openShopAdmin();
+  } catch (e) { fail(e); }
+}
+
+async function orderAction(id, act) {
+  const run = async () => {
+    try {
+      await api(`/api/admin/orders/${id}/${act}`, { method: 'POST' });
+      toast(act === 'done' ? 'সম্পন্ন হিসেবে চিহ্নিত' : 'বাতিল হয়েছে, টাকা ফেরত দেওয়া হয়েছে', 'success');
+      openShopAdmin();
+    } catch (e) { fail(e); }
+  };
+  if (act === 'cancel') {
+    confirmBox('অর্ডার বাতিল করলে ইউজারের ব্যালেন্সে টাকা ফেরত যাবে। নিশ্চিত?', run, 'বাতিল ও ফেরত', true);
+  } else {
+    confirmBox('আপনি কি UID-তে ডায়মন্ড পাঠিয়ে দিয়েছেন?', run, 'হ্যাঁ, পাঠানো হয়েছে');
+  }
+}
+
 async function openSettings() {
   openModal('সেটিংস', loader(), '');
   let s = {};
@@ -751,4 +931,4 @@ if (adminToken) {
 }
 </script>
 </body>
-</html>
+  </html>
